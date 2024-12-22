@@ -92,4 +92,7 @@ return entity;
     public static LocalDate strToDate(String strDate){
         return LocalDate.parse(strDate, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
     }
+    public static String dateToStr(LocalDate date){
+        return date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+    }
 }

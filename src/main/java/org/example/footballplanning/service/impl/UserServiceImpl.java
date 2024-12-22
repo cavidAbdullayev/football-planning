@@ -232,6 +232,7 @@ public class UserServiceImpl implements UserService {
         }
         mapFields(user, request);
         mapFields(response, user);
+        response.setDateOfBirth(dateToStr(strToDate(dateOfBirth)));
         response.setMessage("User updated successfully!");
         return response;
     }
