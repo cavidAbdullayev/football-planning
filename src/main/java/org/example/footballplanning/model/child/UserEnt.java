@@ -44,30 +44,39 @@ public class UserEnt extends BaseEnt {
     LocalDate dateOfBirth;
 
     @Builder.Default
+    Double debt=0d;
+
+    @Builder.Default
     boolean isActive = false;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    boolean hasEverDeleted=false;
+
+    @OneToMany
+    List<MatchEnt>futureMatches;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY,orphanRemoval = true)
     List<PaymentEnt> payments;
 
-    @OneToOne(mappedBy = "managerUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "managerUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY,orphanRemoval = true)
     TeamEnt team;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY,orphanRemoval = true)
     List<FeedbackEnt> sentFeedbacks;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY,orphanRemoval = true)
     List<Token> tokens;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     PhotoEnt photo;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "contactUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY,orphanRemoval = true)
     List<AnnouncementEnt> sharedAnnouncements;
 
-    @OneToMany(mappedBy = "from", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "from", cascade = CascadeType.ALL, fetch = FetchType.LAZY,orphanRemoval = true)
     List<RequestEnt> sentRequests;
 
-    @OneToMany(mappedBy = "to", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "to", cascade = CascadeType.ALL, fetch = FetchType.LAZY,orphanRemoval = true)
     List<RequestEnt> receivedRequests;
 
     @Override

@@ -17,17 +17,18 @@ import java.util.List;
 @Table(name = "team")
 public class TeamEnt extends BaseEnt {
     @Column(length = 30)
-    String name;
+    String teamName;
 
     @OneToOne
     UserEnt managerUser;
+
     @OneToMany(mappedBy = "team",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     List<AnnouncementEnt>announcements;
 
     @Override
     public String toString() {
         return "TeamEnt{" +
-                "name='" + name + '\'' +
+                "name='" + teamName + '\'' +
                 '}';
     }
 }

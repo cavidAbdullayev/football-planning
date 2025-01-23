@@ -3,7 +3,7 @@ package org.example.footballplanning.model.child;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.example.footballplanning.enums.PaymentMethod;
+import org.example.footballplanning.enums.PaymentMethodEnum;
 import org.example.footballplanning.model.parent.BaseEnt;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -24,7 +24,7 @@ public class PaymentEnt extends BaseEnt {
     LocalDateTime paymentDate;
 
     @Enumerated(EnumType.STRING)
-    PaymentMethod paymentMethod;
+    PaymentMethodEnum paymentMethod;
 
     @ManyToOne
     @JoinColumn(name = "user_id")

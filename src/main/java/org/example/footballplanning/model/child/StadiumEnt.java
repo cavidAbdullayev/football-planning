@@ -16,7 +16,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "stadium")
 public class StadiumEnt extends BaseEnt {
-    @Column(length = 50)
+    @Column(length = 50,unique = true)
     String name;
     @Column(length = 50)
     String location;

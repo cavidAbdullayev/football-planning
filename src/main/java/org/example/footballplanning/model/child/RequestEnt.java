@@ -19,6 +19,7 @@ import org.example.footballplanning.model.parent.BaseEnt;
 public class RequestEnt extends BaseEnt {
     @Column(length = 80)
     String message;
+    Integer playerCount;
 
     @ManyToOne
     UserEnt from;

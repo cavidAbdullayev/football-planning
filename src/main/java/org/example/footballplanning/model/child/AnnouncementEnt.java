@@ -19,29 +19,33 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "announcement")
 public class AnnouncementEnt extends BaseEnt {
-    boolean isActive;
-    @Max(22)
-    @Min(8)
+    @Builder.Default
+    boolean isActive=true;
+    @Max(value = 22,message = "Player count must be less than 22!")
+    @Min(value = 8,message = "Player count must be greater than 8!")
     Integer playerCount;
-    @Max(120)
-    @Min(30)
+    @Max(value = 120,message = "Duration in minutes must be less than 120!")
+    @Min(value = 30,message = "Duration in minutes must be greater than 30!")
     Long durationInMinutes;
     Double costPerPlayer;
     @Column(length = 80)
     String title;
 
-    LocalDateTime matchDay;
+    LocalDateTime startDate;
+    LocalDateTime endDate;
+
+
 
     @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.LAZY,mappedBy = "announcement")
     List<RequestEnt>requests;
     @ManyToOne
+    @JoinColumn(name = "contact_user_id",nullable = false,referencedColumnName = "id")
     UserEnt contactUser;
     @ManyToOne
     StadiumEnt stadium;
     @ManyToOne
     TeamEnt team;
-    @ManyToOne
-    UserEnt user;
+
     @Override
     public String toString() {
         return "AnnouncementEnt{" +
@@ -50,7 +54,12 @@ public class AnnouncementEnt extends BaseEnt {
                 ", durationInMinutes=" + durationInMinutes +
                 ", costPerPlayer=" + costPerPlayer +
                 ", title='" + title + '\'' +
-                ", matchDay=" + matchDay +
+                ", startDate=" + startDate +
+                ", endDate=" + endDate +
+                ", requests=" + requests +
+                ", contactUser=" + contactUser +
+                ", stadium=" + stadium +
+                ", team=" + team +
                 '}';
     }
 }

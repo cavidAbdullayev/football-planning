@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/planning_football_games
+    username: root
+    password: e9fx8ud1zegr
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update

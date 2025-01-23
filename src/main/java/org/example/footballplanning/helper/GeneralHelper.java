@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Stream;
@@ -27,7 +28,7 @@ public class GeneralHelper {
         return response;
     }
     @SneakyThrows
-    public static <T,R> T mapFields(T to, R from){
+    public static <T,F> T mapFields(T to, F from){
         Class<?>entityClass= to.getClass();
         Class<?>requestClass= from.getClass();
 
@@ -40,7 +41,7 @@ public class GeneralHelper {
         for(Field requestField: requestFields){
             requestField.setAccessible(true);
             Object value=requestField.get(from);
-            if(value==null||value instanceof String&&isNullOrEmpty(value.toString())) {
+            if(value==null||(value instanceof String&&isNullOrEmpty(value.toString()))) {
                 continue;
             }
             if(entityFieldNames.contains(requestField.getName())){
@@ -55,14 +56,14 @@ public class GeneralHelper {
         return to;
     }
     @SneakyThrows
-    public static void validateRequest(Object request){
+    public static void validateFields(Object request){
 
         Field[] fields=request.getClass().getDeclaredFields();
 
         for(Field field: fields){
             field.setAccessible(true);
             Object value=field.get(request);
-            if (value instanceof String && isNullOrEmpty(value.toString()) || value == null) {
+            if (value == null||(value instanceof String && ((String) value).isEmpty())) {
                 throw new RuntimeException(field.getName() + " cannot be null or empty!");
             }
         }
@@ -72,27 +73,36 @@ public class GeneralHelper {
         Class<?>entityClass=entity.getClass();
         Class<?>requestClass=request.getClass();
 
-        Field[] requestFields=requestClass.getFields();
+        Field[] requestFields=requestClass.getDeclaredFields();
 
         for (Field requestField : requestFields) {
-            Field entityField = entityClass.getDeclaredField(requestField.getName());
+            Field entityField= Arrays.stream(entityClass.getDeclaredFields()).filter(ef->ef.getName().equals(requestField.getName()))
+                    .findFirst().orElse(null);
+            if(entityField!=null){
 
-            requestField.setAccessible(true);
-            entityField.setAccessible(true);
+                requestField.setAccessible(true);
+                entityField.setAccessible(true);
 
-            Object requestValue = requestField.get(request);
-            Object entityValue = entityField.get(entity);
-            if ((requestValue != null && !requestValue.equals(entityValue))) {
-                entityField.set(entity, requestValue);
+                Object requestValue = requestField.get(request);
+                Object entityValue = entityField.get(entity);
+                if ((requestValue != null&&!requestValue.toString().equalsIgnoreCase("") && !requestValue.equals(entityValue))) {
+                    entityField.set(entity, requestValue);
+                }
             }
-
         }
 return entity;
     }
+
     public static LocalDate strToDate(String strDate){
         return LocalDate.parse(strDate, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
     }
     public static String dateToStr(LocalDate date){
         return date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+    }
+    public static String dateTimeToStr(LocalDateTime date){
+        return date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
+    }
+    public static LocalDateTime strToDateTime(String dateTime){
+        return LocalDateTime.parse(dateTime,DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
     }
 }

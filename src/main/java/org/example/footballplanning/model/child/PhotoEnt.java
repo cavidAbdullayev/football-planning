@@ -17,7 +17,6 @@ import org.example.footballplanning.model.parent.BaseEnt;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "photo")
 public class PhotoEnt extends BaseEnt {
-    String name;
     String path;
     String format;
 
@@ -28,7 +27,6 @@ public class PhotoEnt extends BaseEnt {
     @Override
     public String toString() {
         return "PhotoEnt{" +
-                "name='" + name + '\'' +
                 ", path='" + path + '\'' +
                 ", format='" + format + '\'' +
                 '}';
