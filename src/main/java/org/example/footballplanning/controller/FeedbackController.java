@@ -16,12 +16,14 @@ import org.springframework.web.bind.annotation.*;
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class FeedbackController {
     FeedbackService feedbackService;
+
     @PostMapping("/create-feedback")
-    public CreateFeedbackResponseBean createFeedback(@RequestBody CreateFeedbackRequestBean request){
+    public CreateFeedbackResponseBean createFeedback(@RequestBody CreateFeedbackRequestBean request) {
         return feedbackService.createFeedback(request);
     }
+
     @GetMapping("/get-all-feedbacks-by-username")
-    public GetFeedbacksByUsernameResponseBean getByFeedbacksUsername(@RequestBody GetFeedbacksByUsernameRequestBean request){
+    public GetFeedbacksByUsernameResponseBean getByFeedbacksUsername(@RequestBody GetFeedbacksByUsernameRequestBean request) {
         return feedbackService.getByFeedbacksUsername(request);
     }
 }

@@ -13,16 +13,11 @@ import org.example.footballplanning.bean.user.loginWithPhoneNumber.LoginUserWith
 import org.example.footballplanning.bean.user.loginWithPhoneNumber.LoginUserWithPhoneNumberResponseBean;
 import org.example.footballplanning.bean.user.payDebt.PayDebtRequestBean;
 import org.example.footballplanning.bean.user.payDebt.PayDebtResponseBean;
-import org.example.footballplanning.bean.user.receiveRequest.ReceiveRequestRequestBean;
-import org.example.footballplanning.bean.user.receiveRequest.ReceiveRequestResponseBean;
 import org.example.footballplanning.bean.user.register.RegisterUserRequestBean;
 import org.example.footballplanning.bean.user.register.RegisterUserResponseBean;
-import org.example.footballplanning.bean.user.showReceivedRequests.ShowReceivedRequestsResponseBean;
-import org.example.footballplanning.bean.user.showSentRequests.ShowSentRequestsResponseBean;
 import org.example.footballplanning.bean.user.update.UpdateUserRequest;
 import org.example.footballplanning.bean.user.update.UpdateUserResponse;
 
-import java.util.List;
 
 public interface UserService {
     ConfirmRegisterResponseBean confirmRegistration(String strToken);
@@ -35,6 +30,6 @@ public interface UserService {
     DeleteAccountResponseBean deleteAccount(DeleteAccountRequestBean request);
     ConfirmDeleteAccountResponseBean confirmDeleteAccount(String strToken);
     PayDebtResponseBean payDebt(PayDebtRequestBean request);
-    List<ShowReceivedRequestsResponseBean> showReceivedRequests();
-    List<ShowSentRequestsResponseBean> showSentRequests();
+
+
 }

@@ -1,16 +1,12 @@
 package org.example.footballplanning.model.child;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import org.example.footballplanning.model.parent.BaseEnt;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -44,39 +40,36 @@ public class UserEnt extends BaseEnt {
     LocalDate dateOfBirth;
 
     @Builder.Default
-    Double debt=0d;
+    Double debt = 0d;
 
     @Builder.Default
     boolean isActive = false;
 
     @Builder.Default
-    boolean hasEverDeleted=false;
+    boolean hasEverDeleted = false;
 
-    @OneToMany
-    List<MatchEnt>futureMatches;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY,orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     List<PaymentEnt> payments;
 
-    @OneToOne(mappedBy = "managerUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY,orphanRemoval = true)
+    @OneToOne(mappedBy = "managerUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     TeamEnt team;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY,orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     List<FeedbackEnt> sentFeedbacks;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY,orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     List<Token> tokens;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     PhotoEnt photo;
 
-    @OneToMany(mappedBy = "contactUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY,orphanRemoval = true)
+    @OneToMany(mappedBy = "contactUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     List<AnnouncementEnt> sharedAnnouncements;
 
-    @OneToMany(mappedBy = "from", cascade = CascadeType.ALL, fetch = FetchType.LAZY,orphanRemoval = true)
+    @OneToMany(mappedBy = "from", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     List<RequestEnt> sentRequests;
 
-    @OneToMany(mappedBy = "to", cascade = CascadeType.ALL, fetch = FetchType.LAZY,orphanRemoval = true)
+    @OneToMany(mappedBy = "to", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     List<RequestEnt> receivedRequests;
 
     @Override

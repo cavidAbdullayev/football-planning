@@ -15,5 +15,4 @@ public class RequestToAnnouncementRequestBean {
     String announcementId;
     String message;
     Integer playerCount;
-
 }

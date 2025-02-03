@@ -24,52 +24,52 @@ import static org.example.footballplanning.helper.GeneralHelper.*;
 public class TeamServiceImpl implements TeamService {
     TeamRepository teamRepository;
     UserRepository userRepository;
+
     @Override
     public CreateTeamResponseBean create(CreateTeamRequestBean request) {
-        CreateTeamResponseBean response=new CreateTeamResponseBean();
-        String username=request.getUsername();
-        UserEnt user=userRepository.findByUsernameAndState(username,1).orElseThrow(()->new RuntimeException("User not found!"));
-        if(user.getTeam()!=null){
+        CreateTeamResponseBean response = new CreateTeamResponseBean();
+        String username = request.getUsername();
+        UserEnt user = userRepository.findByUsernameAndState(username, 1).orElseThrow(() -> new RuntimeException("User not found!"));
+        if (user.getTeam() != null) {
             throw new RuntimeException("User already has team!");
         }
-        String teamName= request.getTeamName();
-        if(teamRepository.existsByTeamName(teamName)){
+        String teamName = request.getTeamName();
+        if (teamRepository.existsByTeamName(teamName)) {
             throw new RuntimeException("Team name already exists!");
         }
         validateFields(request);
-        TeamEnt team=new TeamEnt();
-        mapFields(team,request);
+        TeamEnt team = new TeamEnt();
+        mapFields(team, request);
         team.setManagerUser(user);
         teamRepository.save(team);
         response.setTeamName(teamName);
-        return createResponse(response,"Team created successfully!");
+        return createResponse(response, "Team created successfully!");
     }
 
     @Override
     public UpdateTeamResponseBean update(UpdateTeamRequestBean request) {
-        UpdateTeamResponseBean response=new UpdateTeamResponseBean();
+        UpdateTeamResponseBean response = new UpdateTeamResponseBean();
         validateFields(request);
-        String teamName=request.getTeamOldName();
-        String teamNewName=request.getTeamName();
-        TeamEnt team=teamRepository.findByTeamName(teamName).orElseThrow(()->new RuntimeException("Team not found!"));
-        if(teamRepository.existsByTeamName(teamNewName)&&(!teamNewName.equalsIgnoreCase(teamName))){
+        String teamName = request.getTeamOldName();
+        String teamNewName = request.getTeamName();
+        TeamEnt team = teamRepository.findByTeamName(teamName).orElseThrow(() -> new RuntimeException("Team not found!"));
+        if (teamRepository.existsByTeamName(teamNewName) && (!teamNewName.equalsIgnoreCase(teamName))) {
             throw new RuntimeException("Team name already exists!");
         }
-        updateDifferentFields(team,request);
+        updateDifferentFields(team, request);
         teamRepository.save(team);
         response.setTeamName(teamNewName);
-        return createResponse(response,"Team updated successfully!");
+        return createResponse(response, "Team updated successfully!");
     }
 
     @Override
     public DeleteTeamResponseBean delete(DeleteTeamRequestBean request) {
-        DeleteTeamResponseBean response=new DeleteTeamResponseBean();
+        DeleteTeamResponseBean response = new DeleteTeamResponseBean();
         validateFields(request);
-        String teamName=request.getTeamName();
-        TeamEnt team=teamRepository.findByTeamName(teamName).orElseThrow(()->new RuntimeException("Team not found!"));
+        String teamName = request.getTeamName();
+        TeamEnt team = teamRepository.findByTeamName(teamName).orElseThrow(() -> new RuntimeException("Team not found!"));
         teamRepository.deleteById(team.getId());
         response.setTeamName(teamName);
-        return createResponse(response,"Team deleted successfully!");
+        return createResponse(response, "Team deleted successfully!");
     }
-
 }

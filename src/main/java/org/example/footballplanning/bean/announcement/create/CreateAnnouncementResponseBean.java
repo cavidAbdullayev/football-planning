@@ -12,7 +12,6 @@ import org.example.footballplanning.bean.user.getUser.GetUserResponseBean;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @EqualsAndHashCode(callSuper = true)
 public class CreateAnnouncementResponseBean extends BaseResponseBean {
-
     Integer playerCount;
     Long durationInMinutes;
     String title;
@@ -20,5 +19,4 @@ public class CreateAnnouncementResponseBean extends BaseResponseBean {
     GetUserResponseBean contactUser;
     GetStadiumResponseBean stadium;
     Double costPerPlayer;
-
 }

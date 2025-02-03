@@ -22,25 +22,29 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class StadiumController {
     StadiumService stadiumService;
+
     @GetMapping("/get-by-name")
-    public GetStadiumResponseBean getByName(@RequestBody GetByNameRequestBean request){
+    public GetStadiumResponseBean getByName(@RequestBody GetByNameRequestBean request) {
         return stadiumService.getByName(request);
     }
+
     @GetMapping("/get-all")
-    public List<GetStadiumResponseBean>getAll(){
+    public List<GetStadiumResponseBean> getAll() {
         return stadiumService.getAll();
     }
+
     @PostMapping("/create")
-    public CreateStadiumResponseBean create(@RequestBody CreateStadiumRequestBean request){
+    public CreateStadiumResponseBean create(@RequestBody CreateStadiumRequestBean request) {
         return stadiumService.create(request);
     }
+
     @PutMapping("/update")
-    public UpdateStadiumResponseBean update(@RequestBody UpdateStadiumRequestBean request){
+    public UpdateStadiumResponseBean update(@RequestBody UpdateStadiumRequestBean request) {
         return stadiumService.update(request);
     }
+
     @DeleteMapping("/delete")
-    public DeleteStadiumResponseBean delete(@RequestBody DeleteStadiumRequestBean request){
+    public DeleteStadiumResponseBean delete(@RequestBody DeleteStadiumRequestBean request) {
         return stadiumService.delete(request);
     }
-
 }

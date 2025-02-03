@@ -17,17 +17,9 @@ public interface AnnouncementRepository extends JpaRepository<AnnouncementEnt,St
     boolean existsCrashingAnnouncementsAtStadium(@Param("startDate") LocalDateTime startDate,
                                                  @Param("endDate") LocalDateTime endDate,
                                                  @Param("stadiumId")String stadiumId);
-//    @Query(value = """
-//    SELECT COUNT(*) > 0
-//    FROM AnnouncementEnt senderAnnouncement
-//    WHERE senderAnnouncement.contactUser.id = :fromUserId
-//      AND NOT (senderAnnouncement.endDate < :startDate OR senderAnnouncement.startDate > :endDate)
-//    """)
-//    boolean isCrashAnnouncement(@Param("fromUserId") String fromUserId,
-//                                @Param("startDate") LocalDateTime startDate,
-//                                @Param("endDate") LocalDateTime endDate);
-
 
     Optional<AnnouncementEnt>findByIdAndState(String id,Integer state);
-    List<AnnouncementEnt>findAllByStadium_IdAndState(String id,Integer state);
+    List<AnnouncementEnt>findAllByStadium_IdAndState(String stadiumId,Integer state);
+    @Query("select a from AnnouncementEnt a left join fetch a.requests where (a.startDate < :now and a.state=1) or (a.startDate > :now and a.state=0)")
+    List<AnnouncementEnt>findAllByStartDateIsBeforeAndActiveOrAfterAndDeactivated(@Param("now") LocalDateTime dateTime);
 }

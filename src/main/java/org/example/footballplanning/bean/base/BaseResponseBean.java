@@ -9,6 +9,6 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public abstract class BaseResponseBean {
+public class BaseResponseBean {
     String message;
 }

@@ -35,7 +35,7 @@ public class EmailServiceHelper {
     static final String CONFIRM_FORGOT_PASSWORD_URL = "/user/confirm-forgot-password";
     static final String DELETE_ACCOUNT_URL = "/user/confirm-delete-account";
     static final String TOKEN_PARAM = "strToken=";
-    static final String USERNAME_PARAM="username=";
+    static final String USERNAME_PARAM = "username=";
     static final String PASSWORD_PARAM = "newPassword=";
     static final String FOLLOW_LINK_MESSAGE = "Please, follow the link below to complete your ";
     static final String CONFIRMATION_LINK_SENT = "Confirmation link sent to ";
@@ -53,23 +53,21 @@ public class EmailServiceHelper {
         }
         String url = generateUrl(data);
         SimpleMailMessage message = new SimpleMailMessage();
-        String text=FOLLOW_LINK_MESSAGE + tokenType.name().toLowerCase() + ": " + url;
-        sendEmail(email,text,tokenType.name());
+        String text = FOLLOW_LINK_MESSAGE + tokenType.name().toLowerCase() + ": " + url;
+        sendEmail(email, text, tokenType.name());
         response = CONFIRMATION_LINK_SENT + email + "\n" + FOLLOW_LINK_MESSAGE + tokenType.name().toLowerCase() + "!";
         return response;
     }
 
-    public void sendEmailForDebt(String email, Double debt){
-        UserEnt user=userRepository.findByEmailAndState(email,1).orElseThrow(()->new RuntimeException("User not found!"));
+    public void sendEmailForDebt(String email, Double debt) {
+        UserEnt user = userRepository.findByEmailAndState(email, 1).orElseThrow(() -> new RuntimeException("User not found!"));
 
-        String firstName=user.getFirstName();
+        String firstName = user.getFirstName();
 
-        String text="Hi, "+firstName+"! You have total "+debt+"$ debt. Please, pay your debt as soon as. \nOtherwise, you cannot share any announcement!";
+        String text = "Hi, " + firstName + "! You have total " + debt + "$ debt. Please, pay your debt as soon as. \nOtherwise, you cannot share any announcement!";
 
-        sendEmail(email,text, EmailSubjectEnum.DEBT.name());
+        sendEmail(email, text, EmailSubjectEnum.DEBT.name());
     }
-
-
 
 
     private String getServiceUrl(TokenTypeEnum tokenType) {
@@ -77,31 +75,33 @@ public class EmailServiceHelper {
             return CONFIRM_REGISTER_URL;
         } else if (tokenType == FORGOT_PASSWORD) {
             return CONFIRM_FORGOT_PASSWORD_URL;
-        }else if(tokenType==DELETE_ACCOUNT){
+        } else if (tokenType == DELETE_ACCOUNT) {
             return DELETE_ACCOUNT_URL;
         }
         return null;
     }
-    private void sendEmail(String email,String text,String subject){
-        SimpleMailMessage message=new SimpleMailMessage();
+
+    private void sendEmail(String email, String text, String subject) {
+        SimpleMailMessage message = new SimpleMailMessage();
         message.setText(text);
         message.setSubject(subject);
         message.setFrom(ownEmail);
         message.setTo(email);
         mailSender.send(message);
     }
+
     private String generateUrl(Map<String, Object> data) {
         Token token = (Token) data.get("token");
         TokenTypeEnum tokenType = token.getUsedFor();
         String strToken = token.getStrToken();
         String serviceUrl = getServiceUrl(tokenType);
         String url = http + host + ":" + port + serviceUrl;
-        if (tokenType.name().equalsIgnoreCase("registration")||tokenType.name().equalsIgnoreCase("delete_account")) {
+        if (tokenType.name().equalsIgnoreCase("registration") || tokenType.name().equalsIgnoreCase("delete_account")) {
             url += "?" + TOKEN_PARAM + encode(strToken);
         } else if (tokenType.name().equalsIgnoreCase("forgot_password")) {
             String newPassword = (String) data.get("newPassword");
             url += "?" + TOKEN_PARAM + encode(strToken) + "&" + PASSWORD_PARAM + encode(newPassword);
-    }
+        }
         return url;
     }
 }

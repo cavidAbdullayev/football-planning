@@ -1,19 +1,19 @@
-package org.example.footballplanning.bean.user.getUser;
+package org.example.footballplanning.bean.match.get;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import org.example.footballplanning.bean.base.BaseResponseBean;
+
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@EqualsAndHashCode(callSuper = true)
 @SuperBuilder
-public class GetUserResponseBean extends BaseResponseBean {
-    String firstName;
-    String lastName;
-    String username;
-    String phoneNumber;
-    String dateOfBirth;
+public class GetMatchResponse extends BaseResponseBean {
+    Long durationInMinutes;
+    Double costPerPlayer;
+    String matchDate;
+    String announcementId;
 }

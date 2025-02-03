@@ -12,5 +12,5 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class GetFeedbacksByUsernameResponseBean extends BaseResponseBean {
     String username;
-    List<FeedbackResponseBean>feedbacks;
+    List<FeedbackResponseBean> feedbacks;
 }

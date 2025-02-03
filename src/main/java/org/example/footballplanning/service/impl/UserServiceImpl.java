@@ -13,15 +13,12 @@ import org.example.footballplanning.bean.user.deleteAccount.DeleteAccountRequest
 import org.example.footballplanning.bean.user.deleteAccount.DeleteAccountResponseBean;
 import org.example.footballplanning.bean.user.forgotPassword.ForgotPasswordRequestBean;
 import org.example.footballplanning.bean.user.forgotPassword.ForgotPasswordResponseBean;
-import org.example.footballplanning.bean.user.getUser.GetUserResponseBean;
 import org.example.footballplanning.bean.user.loginWithPhoneNumber.LoginUserWithPhoneNumberRequestBean;
 import org.example.footballplanning.bean.user.loginWithPhoneNumber.LoginUserWithPhoneNumberResponseBean;
 import org.example.footballplanning.bean.user.payDebt.PayDebtRequestBean;
 import org.example.footballplanning.bean.user.payDebt.PayDebtResponseBean;
 import org.example.footballplanning.bean.user.register.RegisterUserRequestBean;
 import org.example.footballplanning.bean.user.register.RegisterUserResponseBean;
-import org.example.footballplanning.bean.user.showReceivedRequests.ShowReceivedRequestsResponseBean;
-import org.example.footballplanning.bean.user.showSentRequests.ShowSentRequestsResponseBean;
 import org.example.footballplanning.bean.user.update.UpdateUserRequest;
 import org.example.footballplanning.bean.user.update.UpdateUserResponse;
 import org.example.footballplanning.enums.PaymentMethodEnum;
@@ -56,7 +53,6 @@ public class UserServiceImpl implements UserService {
     EmailServiceHelper emailServiceHelper;
     PaymentRepository paymentRepository;
     AnnouncementRepository announcementRepository;
-    MatchRepository matchRepository;
     TeamRepository teamRepository;
     RequestRepository requestRepository;
 
@@ -97,7 +93,7 @@ public class UserServiceImpl implements UserService {
         user.setDateOfBirth(birthDate);
         user.setState(0);
 
-        Token token = tokenServiceHelper.getOrGenerateToken(user,REGISTRATION);
+        Token token = tokenServiceHelper.getOrGenerateToken(user, REGISTRATION);
 
         userRepository.save(user);
         tokenRepository.save(token);
@@ -117,20 +113,20 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public ConfirmRegisterResponseBean confirmRegistration(@NotNull String strToken) {
-        ConfirmRegisterResponseBean response=new ConfirmRegisterResponseBean();
+        ConfirmRegisterResponseBean response = new ConfirmRegisterResponseBean();
 
-        Token token =tokenServiceHelper.checkToken(strToken);
+        Token token = tokenServiceHelper.checkAndGetToken(strToken);
         UserEnt user = token.getUser();
-        List<AnnouncementEnt>announcements=user.getSharedAnnouncements();
+        List<AnnouncementEnt> announcements = user.getSharedAnnouncements();
 
         //return last announcements if don't expire
-        announcements.stream().filter(announcement->
-                LocalDateTime.now().plusHours(6).isBefore(announcement.getStartDate())).forEach(announcement-> announcement.setState(1));
+        announcements.stream().filter(announcement ->
+                LocalDateTime.now().plusHours(6).isBefore(announcement.getStartDate())).forEach(announcement -> announcement.setState(1));
 
         user.setState(1);
         userRepository.save(user);
 
-        mapFields(response,user);
+        mapFields(response, user);
         response.setDateOfBirth(user.getDateOfBirth().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
 
         return createResponse(response, "User registered successfully!");
@@ -199,7 +195,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public ConfirmForgotPasswordResponseBean confirmForgotPassword(@NotNull String strToken, String newPassword) {
-        Token token = tokenServiceHelper.checkToken(strToken);
+        Token token = tokenServiceHelper.checkAndGetToken(strToken);
 
         UserEnt user = token.getUser();
 
@@ -243,28 +239,28 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public DeleteAccountResponseBean deleteAccount(DeleteAccountRequestBean request) {
-        DeleteAccountResponseBean response=new DeleteAccountResponseBean();
+        DeleteAccountResponseBean response = new DeleteAccountResponseBean();
 
         validateFields(request);
 
-        String username=request.getUsername();
+        String username = request.getUsername();
 
-        UserEnt user=userRepository.findByUsernameAndState(username,1).orElseThrow(()->new RuntimeException("User not exists by username!"));
-        Double debt=user.getDebt();
+        UserEnt user = userRepository.findByUsernameAndState(username, 1).orElseThrow(() -> new RuntimeException("User not exists by username!"));
+        Double debt = user.getDebt();
 
-        if(debt!=null&&debt>0){
+        if (debt != null && debt > 0) {
             throw new RuntimeException("You have debt! Firstly pay your debt before deleting your account!");
         }
 
-        Token token=user.getTokens().stream().filter(t->t.getUsedFor().equals(DELETE_ACCOUNT)).findFirst()
-                .orElseGet(()->tokenServiceHelper.generateToken(user,DELETE_ACCOUNT));
+        Token token = user.getTokens().stream().filter(t -> t.getUsedFor().equals(DELETE_ACCOUNT)).findFirst()
+                .orElseGet(() -> tokenServiceHelper.generateToken(user, DELETE_ACCOUNT));
 
         token.setExpireTime(LocalDateTime.now().plusMinutes(5));
         token.setStrToken(UUID.randomUUID().toString());
 
-        Map<String, Object>data=Map.of("token",token,"username",username);
+        Map<String, Object> data = Map.of("token", token, "username", username);
 
-        String message=emailServiceHelper.sendEmailWithToken(data,user.getEmail());
+        String message = emailServiceHelper.sendEmailWithToken(data, user.getEmail());
 
         tokenRepository.save(token);
 
@@ -274,26 +270,26 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ConfirmDeleteAccountResponseBean confirmDeleteAccount(String strToken) {
-        ConfirmDeleteAccountResponseBean response=new ConfirmDeleteAccountResponseBean();
+        ConfirmDeleteAccountResponseBean response = new ConfirmDeleteAccountResponseBean();
 
-        Token token=tokenServiceHelper.checkToken(strToken);
+        Token token = tokenServiceHelper.checkAndGetToken(strToken);
 
-        UserEnt user=token.getUser();
+        UserEnt user = token.getUser();
         user.setState(0);
 
-        TeamEnt team=user.getTeam();
+        TeamEnt team = user.getTeam();
         team.setState(0);
 
-        List<AnnouncementEnt>announcements=user.getSharedAnnouncements();
+        List<AnnouncementEnt> announcements = user.getSharedAnnouncements();
         announcements.forEach(announcement -> announcement.setState(0));
 
-        List<RequestEnt>sentRequests=user.getSentRequests();
-        sentRequests.stream().filter(sentRequest->sentRequest.getState().equals(1))
-                .forEach(sentRequest->sentRequest.setState(0));
+        List<RequestEnt> sentRequests = user.getSentRequests();
+        sentRequests.stream().filter(sentRequest -> sentRequest.getState().equals(1))
+                .forEach(sentRequest -> sentRequest.setState(0));
 
-        List<RequestEnt>receivedRequests=user.getReceivedRequests();
-        receivedRequests.stream().filter(receivedRequest->receivedRequest.getState()==1)
-                .forEach(receivedRequest->receivedRequest.setState(0));
+        List<RequestEnt> receivedRequests = user.getReceivedRequests();
+        receivedRequests.stream().filter(receivedRequest -> receivedRequest.getState() == 1)
+                .forEach(receivedRequest -> receivedRequest.setState(0));
 
         user.setHasEverDeleted(true);
 
@@ -312,83 +308,36 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public PayDebtResponseBean payDebt(PayDebtRequestBean request) {
-        PayDebtResponseBean response=new PayDebtResponseBean();
+        PayDebtResponseBean response = new PayDebtResponseBean();
         validateFields(request);
 
-        UserEnt user=userRepository.findByIdAndState(currentUserId,1).orElseThrow(()->new RuntimeException("User not found!"));
+        UserEnt user = userRepository.findByIdAndState(currentUserId, 1).orElseThrow(() -> new RuntimeException("User not found!"));
 
-        Double debt=user.getDebt();
+        Double debt = user.getDebt();
 
-        if(debt==null||debt==0){
+        if (debt == null || debt == 0) {
             throw new RuntimeException("You have not any debt!");
         }
 
-        Double amount=request.getAmount();
-        String paymentMethod=request.getPaymentMethod();
+        Double amount = request.getAmount();
+        String paymentMethod = request.getPaymentMethod();
 
-        if(amount<=0){
+        if (amount <= 0) {
             throw new RuntimeException("Invalid amount!");
-        }
-        else {
-            debt=debt<=amount?0:debt-amount;
-            response.setMessage("Your debt paid successfully! Remaining debt: "+debt+"$");
+        } else {
+            debt = debt <= amount ? 0 : debt - amount;
+            response.setMessage("Your debt paid successfully! Remaining debt: " + debt + "$");
         }
 
-        PaymentMethodEnum paymentMethodEnum= Arrays.stream(PaymentMethodEnum.values()).filter(method->method.name().equalsIgnoreCase(paymentMethod)).findFirst()
-                .orElseThrow(()->new RuntimeException("Invalid payment method!"));
-        PaymentEnt payment=mapFields(new PaymentEnt(),request);
+        PaymentMethodEnum paymentMethodEnum = Arrays.stream(PaymentMethodEnum.values()).filter(method -> method.name().equalsIgnoreCase(paymentMethod)).findFirst()
+                .orElseThrow(() -> new RuntimeException("Invalid payment method!"));
+        PaymentEnt payment = mapFields(new PaymentEnt(), request);
         payment.setPaymentMethod(paymentMethodEnum);
         payment.setUser(user);
         paymentRepository.save(payment);
 
         user.setDebt(debt);
         userRepository.save(user);
-
-        return response;
-    }
-
-    @Override
-    public List<ShowReceivedRequestsResponseBean> showReceivedRequests() {
-        UserEnt user=userRepository.findByIdAndState(currentUserId,1).orElseThrow(()->new RuntimeException("User not found!"));
-        List<RequestEnt>requests=user.getReceivedRequests();
-        List<ShowReceivedRequestsResponseBean>response=new ArrayList<>();
-
-        requests.stream().filter(request->request.getState()==1).forEach(request->{
-            GetUserResponseBean userResponse=new GetUserResponseBean();
-            ShowReceivedRequestsResponseBean requestResponse=new ShowReceivedRequestsResponseBean();
-            UserEnt from=request.getFrom();
-            mapFields(userResponse,from);
-            userResponse.setDateOfBirth(dateToStr(from.getDateOfBirth()));
-            requestResponse.setFrom(userResponse);
-            requestResponse.setTeamName(from.getTeam().getTeamName());
-            requestResponse.setMessage(request.getMessage());
-            requestResponse.setPlayerCount(request.getPlayerCount());
-            requestResponse.setTimeStamp(dateTimeToStr(request.getCreatedDate()));
-            response.add(requestResponse);
-        });
-
-        return response;
-    }
-
-    @Override
-    public List<ShowSentRequestsResponseBean> showSentRequests() {
-        UserEnt user=userRepository.findByIdAndState(currentUserId,1).orElseThrow(()->new RuntimeException("User not found!"));
-        List<RequestEnt>requests=user.getSentRequests();
-        List<ShowSentRequestsResponseBean>response=new ArrayList<>();
-
-        requests.stream().filter(request->request.getState()==1).forEach(request-> {
-            GetUserResponseBean userResponse=new GetUserResponseBean();
-            ShowSentRequestsResponseBean requestResponse=new ShowSentRequestsResponseBean();
-            UserEnt to=request.getTo();
-            mapFields(userResponse,to);
-            userResponse.setDateOfBirth(dateToStr(to.getDateOfBirth()));
-            requestResponse.setTo(userResponse);
-            requestResponse.setTeamName(to.getTeam().getTeamName());
-            requestResponse.setMessage(request.getMessage());
-            requestResponse.setPlayerCount(request.getPlayerCount());
-            requestResponse.setTimeStamp(dateTimeToStr(request.getCreatedDate()));
-            response.add(requestResponse);
-        });
 
         return response;
     }

@@ -17,14 +17,14 @@ import java.util.List;
 public class DebtReminderScheduler {
     UserRepository userRepository;
     EmailServiceHelper emailServiceHelper;
-    @Scheduled(cron = "0 0 9 * * ?")
-    public void sendDebtReminders(){
-        List<UserEnt>usersWithDebt=userRepository.findAllByDebtGreaterThan(0d);
 
-        for(UserEnt user: usersWithDebt){
-            String email=user.getEmail();
-            double debt=user.getDebt();
-            emailServiceHelper.sendEmailForDebt(email,debt);
+    @Scheduled(cron = "0 0 9 * * ?")
+    public void sendDebtReminders() {
+        List<UserEnt> usersWithDebt = userRepository.findAllByDebtGreaterThan(0d);
+        for (UserEnt user : usersWithDebt) {
+            String email = user.getEmail();
+            double debt = user.getDebt();
+            emailServiceHelper.sendEmailForDebt(email, debt);
         }
     }
 }

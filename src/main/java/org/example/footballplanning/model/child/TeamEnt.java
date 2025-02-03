@@ -25,6 +25,12 @@ public class TeamEnt extends BaseEnt {
     @OneToMany(mappedBy = "team",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     List<AnnouncementEnt>announcements;
 
+    @OneToMany(mappedBy = "teamA")
+    List<MatchEnt>homeMatch;
+
+    @OneToMany(mappedBy = "teamB")
+    List<MatchEnt>awayMatch;
+
     @Override
     public String toString() {
         return "TeamEnt{" +

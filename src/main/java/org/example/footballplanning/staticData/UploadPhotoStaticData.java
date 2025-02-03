@@ -1,9 +1,6 @@
 package org.example.footballplanning.staticData;
 
-import lombok.AccessLevel;
 import lombok.Data;
-import lombok.experimental.FieldDefaults;
-import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.List;

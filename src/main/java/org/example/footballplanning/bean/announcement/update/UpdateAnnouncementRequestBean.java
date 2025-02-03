@@ -1,16 +1,14 @@
-package org.example.footballplanning.bean.announcement.create;
+package org.example.footballplanning.bean.announcement.update;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CreateAnnouncementRequestBean {
+public class UpdateAnnouncementRequestBean {
+    String announcementId;
     Integer playerCount;
     Long durationInMinutes;
     String title;

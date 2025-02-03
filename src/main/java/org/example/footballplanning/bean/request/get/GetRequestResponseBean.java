@@ -1,19 +1,22 @@
-package org.example.footballplanning.bean.user.showReceivedRequests;
+package org.example.footballplanning.bean.request.get;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 import org.example.footballplanning.bean.base.BaseResponseBean;
 import org.example.footballplanning.bean.user.getUser.GetUserResponseBean;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@EqualsAndHashCode(callSuper = true)
-public class ShowReceivedRequestsResponseBean extends BaseResponseBean {
-    GetUserResponseBean from;
+@SuperBuilder
+public class GetRequestResponseBean extends BaseResponseBean {
+    String announcementId;
+    GetUserResponseBean to;
     Integer playerCount;
     String message;
-    String teamName;
     String timeStamp;
+    GetUserResponseBean from;
 }

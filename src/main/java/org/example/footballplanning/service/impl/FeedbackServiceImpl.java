@@ -25,37 +25,37 @@ import static org.example.footballplanning.helper.GeneralHelper.*;
 public class FeedbackServiceImpl implements FeedbackService {
     UserRepository userRepository;
     FeedBackRepository feedBackRepository;
+
     @Override
     public CreateFeedbackResponseBean createFeedback(CreateFeedbackRequestBean request) {
-        CreateFeedbackResponseBean response=new CreateFeedbackResponseBean();
+        CreateFeedbackResponseBean response = new CreateFeedbackResponseBean();
         validateFields(request);
-        String username=request.getUsername();
-        UserEnt user=userRepository.findByUsernameAndState(username,1).orElseThrow(()->new RuntimeException("User doesn't exists!"));
-        FeedbackEnt feedback= mapFields(new FeedbackEnt(),request);
+        String username = request.getUsername();
+        UserEnt user = userRepository.findByUsernameAndState(username, 1).orElseThrow(() -> new RuntimeException("User doesn't exists!"));
+        FeedbackEnt feedback = mapFields(new FeedbackEnt(), request);
         feedback.setUser(user);
         feedBackRepository.save(feedback);
         response.setTimeStamp(dateTimeToStr(feedback.getCreatedDate()));
-        mapFields(response,request);
-        return createResponse(response,"Feedback sent successfully!");
+        mapFields(response, request);
+        return createResponse(response, "Feedback sent successfully!");
     }
 
     @Override
     public GetFeedbacksByUsernameResponseBean getByFeedbacksUsername(GetFeedbacksByUsernameRequestBean request) {
-        GetFeedbacksByUsernameResponseBean response=new GetFeedbacksByUsernameResponseBean();
-        List<FeedbackResponseBean> feedbackResponses=new ArrayList<>();
+        GetFeedbacksByUsernameResponseBean response = new GetFeedbacksByUsernameResponseBean();
+        List<FeedbackResponseBean> feedbackResponses = new ArrayList<>();
         validateFields(request);
-        String username=request.getUsername();
-        UserEnt user=userRepository.findByUsernameAndState(username,1).orElseThrow(()->new RuntimeException("User don't exists!"));
-        List<FeedbackEnt>feedbacks=user.getSentFeedbacks();
-        for(FeedbackEnt feedback:feedbacks){
-            FeedbackResponseBean feedbackResponse=new FeedbackResponseBean();
-            mapFields(feedbackResponse,feedback);
+        String username = request.getUsername();
+        UserEnt user = userRepository.findByUsernameAndState(username, 1).orElseThrow(() -> new RuntimeException("User don't exists!"));
+        List<FeedbackEnt> feedbacks = user.getSentFeedbacks();
+        for (FeedbackEnt feedback : feedbacks) {
+            FeedbackResponseBean feedbackResponse = new FeedbackResponseBean();
+            mapFields(feedbackResponse, feedback);
             feedbackResponse.setTimeStamp(dateTimeToStr(feedback.getCreatedDate()));
             feedbackResponses.add(feedbackResponse);
         }
         response.setFeedbacks(feedbackResponses);
-        mapFields(response,request);
+        mapFields(response, request);
         return response;
     }
-
 }

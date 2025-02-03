@@ -19,7 +19,8 @@ import static java.util.Objects.*;
 @Component
 public class TokenServiceHelper {
     TokenRepository tokenRepository;
-    public Token generateToken(UserEnt user, TokenTypeEnum tokenType){
+
+    public Token generateToken(UserEnt user, TokenTypeEnum tokenType) {
         return Token.builder()
                 .strToken(UUID.randomUUID().toString())
                 .usedFor(tokenType)
@@ -27,12 +28,13 @@ public class TokenServiceHelper {
                 .user(user)
                 .build();
     }
+
     public Token getOrGenerateToken(UserEnt user, TokenTypeEnum tokenType) {
         return user.getTokens().stream()
                 .filter(t -> t.getUsedFor().equals(tokenType))
                 .findFirst()
-                .map(this::updateToken) // Mevcut token güncelleniyor
-                .orElseGet(() -> generateToken(user, tokenType)); // Yeni token oluşturuluyor
+                .map(this::updateToken)
+                .orElseGet(() -> generateToken(user, tokenType));
     }
 
     private Token updateToken(Token token) {
@@ -41,12 +43,12 @@ public class TokenServiceHelper {
         return token;
     }
 
-    public Token checkToken(String strToken){
+    public Token checkAndGetToken(String strToken) {
         Token token = tokenRepository.findByStrTokenAndState(strToken, 1).orElse(null);
-        if(isNull(token)) {
+        if (isNull(token)) {
             throw new RuntimeException("Token not found!");
         }
-        if(token.getExpireTime().isBefore(LocalDateTime.now())){
+        if (token.getExpireTime().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Token has been expired!");
         }
         return token;

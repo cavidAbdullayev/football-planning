@@ -17,14 +17,11 @@ import org.example.footballplanning.bean.user.payDebt.PayDebtRequestBean;
 import org.example.footballplanning.bean.user.payDebt.PayDebtResponseBean;
 import org.example.footballplanning.bean.user.register.RegisterUserRequestBean;
 import org.example.footballplanning.bean.user.register.RegisterUserResponseBean;
-import org.example.footballplanning.bean.user.showReceivedRequests.ShowReceivedRequestsResponseBean;
-import org.example.footballplanning.bean.user.showSentRequests.ShowSentRequestsResponseBean;
 import org.example.footballplanning.bean.user.update.UpdateUserRequest;
 import org.example.footballplanning.bean.user.update.UpdateUserResponse;
 import org.example.footballplanning.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,59 +29,50 @@ import java.util.List;
 @RequestMapping("/user")
 public class UserController {
     UserService userService;
+
     @PostMapping("/register")
-    public RegisterUserResponseBean registration(@RequestBody @Valid RegisterUserRequestBean request){
+    public RegisterUserResponseBean registration(@RequestBody @Valid RegisterUserRequestBean request) {
         return userService.register(request);
     }
 
     @GetMapping("/confirm-register")
-    public ConfirmRegisterResponseBean confirmRegister(@RequestParam String strToken){
+    public ConfirmRegisterResponseBean confirmRegister(@RequestParam String strToken) {
         return userService.confirmRegistration(strToken);
     }
 
     @PutMapping("/change-password")
-    public ChangePasswordResponseBean changePassword(@RequestBody @Valid ChangePasswordRequestBean request){
+    public ChangePasswordResponseBean changePassword(@RequestBody @Valid ChangePasswordRequestBean request) {
         return userService.changePassword(request);
     }
 
     @PostMapping("/forgot-password")
-    public ForgotPasswordResponseBean forgotPassword(@RequestBody @Valid ForgotPasswordRequestBean request){
+    public ForgotPasswordResponseBean forgotPassword(@RequestBody @Valid ForgotPasswordRequestBean request) {
         return userService.forgotPassword(request);
     }
 
     @GetMapping("/confirm-forgot-password")
     public ConfirmForgotPasswordResponseBean confirmForgotPassword(@RequestParam(name = "strToken") String strToken,
-                                                                   @RequestParam(name = "newPassword") String newPassword){
-        return userService.confirmForgotPassword(strToken,newPassword);
+                                                                   @RequestParam(name = "newPassword") String newPassword) {
+        return userService.confirmForgotPassword(strToken, newPassword);
     }
 
     @PutMapping("/update")
-    public UpdateUserResponse update(@RequestBody @Valid UpdateUserRequest request){
+    public UpdateUserResponse update(@RequestBody @Valid UpdateUserRequest request) {
         return userService.update(request);
     }
 
     @DeleteMapping("/delete-account")
-    public DeleteAccountResponseBean deleteAccount(@RequestBody @Valid DeleteAccountRequestBean request){
+    public DeleteAccountResponseBean deleteAccount(@RequestBody @Valid DeleteAccountRequestBean request) {
         return userService.deleteAccount(request);
     }
 
     @GetMapping("/confirm-delete-account")
-    public ConfirmDeleteAccountResponseBean confirmDeleteAccount(@RequestParam(name = "strToken") String strToken){
+    public ConfirmDeleteAccountResponseBean confirmDeleteAccount(@RequestParam(name = "strToken") String strToken) {
         return userService.confirmDeleteAccount(strToken);
     }
 
     @PostMapping("/pay-debt")
-    public PayDebtResponseBean payDebt(@RequestBody PayDebtRequestBean request){
+    public PayDebtResponseBean payDebt(@RequestBody PayDebtRequestBean request) {
         return userService.payDebt(request);
-    }
-
-    @GetMapping("/show-received-requests")
-    List<ShowReceivedRequestsResponseBean>showReceivedRequests(){
-        return userService.showReceivedRequests();
-    }
-
-    @GetMapping("/show-sent-requests")
-    List<ShowSentRequestsResponseBean>showSentRequests(){
-        return userService.showSentRequests();
     }
 }

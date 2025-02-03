@@ -2,6 +2,7 @@ package org.example.footballplanning.bean.announcement.get;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 import org.example.footballplanning.bean.base.BaseResponseBean;
 
 @Data
@@ -9,6 +10,7 @@ import org.example.footballplanning.bean.base.BaseResponseBean;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @EqualsAndHashCode(callSuper = true)
+@SuperBuilder
 public class GetAnnouncementResponse extends BaseResponseBean {
     Integer playerCount;
     Long durationInMinutes;

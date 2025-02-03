@@ -30,6 +30,8 @@ public class MatchEnt extends BaseEnt {
     TeamEnt teamB;
     @ManyToOne
     StadiumEnt stadium;
+    @OneToOne
+    AnnouncementEnt announcement;
 
     @Override
     public String toString() {

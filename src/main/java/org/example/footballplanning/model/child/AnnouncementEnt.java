@@ -56,10 +56,6 @@ public class AnnouncementEnt extends BaseEnt {
                 ", title='" + title + '\'' +
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
-                ", requests=" + requests +
-                ", contactUser=" + contactUser +
-                ", stadium=" + stadium +
-                ", team=" + team +
                 '}';
     }
 }

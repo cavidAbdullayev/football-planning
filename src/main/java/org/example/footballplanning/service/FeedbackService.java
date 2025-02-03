@@ -5,7 +5,6 @@ import org.example.footballplanning.bean.feedback.createFeedback.CreateFeedbackR
 import org.example.footballplanning.bean.feedback.getFeedbacks.GetFeedbacksByUsernameRequestBean;
 import org.example.footballplanning.bean.feedback.getFeedbacks.GetFeedbacksByUsernameResponseBean;
 
-import java.util.List;
 
 public interface FeedbackService {
     CreateFeedbackResponseBean createFeedback(CreateFeedbackRequestBean request);

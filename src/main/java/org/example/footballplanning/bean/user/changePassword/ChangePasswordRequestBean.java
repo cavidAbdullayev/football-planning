@@ -1,9 +1,7 @@
 package org.example.footballplanning.bean.user.changePassword;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.example.footballplanning.bean.base.BaseResponseBean;
 
 @Data
 @AllArgsConstructor
