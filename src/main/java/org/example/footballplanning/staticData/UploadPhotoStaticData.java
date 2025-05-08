@@ -7,7 +7,6 @@ import java.util.List;
 @Data
 public class UploadPhotoStaticData {
    public static List<String> imageExtensions = Arrays.asList(
-            "jpeg", "jpg", "png");
+           "jpeg", "jpg", "png");
    public static final String mediaPath = "C:\\cavid\\Java Projects\\football-planning\\src\\main\\resources\\static\\data\\";
-
 }

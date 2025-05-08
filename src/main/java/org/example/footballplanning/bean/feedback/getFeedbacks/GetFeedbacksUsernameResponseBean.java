@@ -2,6 +2,7 @@ package org.example.footballplanning.bean.feedback.getFeedbacks;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 import org.example.footballplanning.bean.base.BaseResponseBean;
 
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class GetFeedbacksByUsernameResponseBean extends BaseResponseBean {
-    String username;
+@SuperBuilder
+public class GetFeedbacksUsernameResponseBean extends BaseResponseBean {
     List<FeedbackResponseBean> feedbacks;
 }

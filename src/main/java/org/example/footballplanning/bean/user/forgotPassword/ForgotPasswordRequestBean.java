@@ -11,7 +11,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ForgotPasswordRequestBean {
-    String username;
     String newPassword;
     String repeatPassword;
+    String email;
 }

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Match Poster</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            text-align: center;
+        }
+
+        .container {
+            padding: 50px 20px;
+        }
+
+        .match-day {
+            color: #00ffd5;
+            font-size: 40px;
+            margin-bottom: 30px;
+        }
+
+        .teams {
+            font-size: 32px;
+            font-weight: bold;
+            color: darkturquoise;
+            margin: 30px 0;
+        }
+
+        .info {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 10px auto;
+            padding: 15px 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            font-size: 18px;
+        }
+
+        .info span {
+            color: #00ffd5;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-size: 14px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>⚽ <span class="match-day">Match Day</span> ⚽</h1>
+    <div class="teams">${teamA} <span style="color: darkturquoise">vs</span> ${teamB}</div>
+    <div class="info">📅 <span>Date:</span> ${date}</div>
+    <div class="info">📍 <span>Stadium:</span> ${stadium}</div>
+    <div class="info">💵 <span>Cost per player:</span> ${cost} AZN</div>
+
+    <div class="footer">Organized by Javid Abdullayev ⚽</div>
+</div>
+</body>
+</html>

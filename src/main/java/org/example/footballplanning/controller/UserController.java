@@ -8,71 +8,65 @@ import org.example.footballplanning.bean.user.changePassword.ChangePasswordReque
 import org.example.footballplanning.bean.user.changePassword.ChangePasswordResponseBean;
 import org.example.footballplanning.bean.user.confirmDeleteAccount.ConfirmDeleteAccountResponseBean;
 import org.example.footballplanning.bean.user.confirmForgotPassword.ConfirmForgotPasswordResponseBean;
-import org.example.footballplanning.bean.user.confirmRegister.ConfirmRegisterResponseBean;
 import org.example.footballplanning.bean.user.deleteAccount.DeleteAccountRequestBean;
 import org.example.footballplanning.bean.user.deleteAccount.DeleteAccountResponseBean;
 import org.example.footballplanning.bean.user.forgotPassword.ForgotPasswordRequestBean;
 import org.example.footballplanning.bean.user.forgotPassword.ForgotPasswordResponseBean;
 import org.example.footballplanning.bean.user.payDebt.PayDebtRequestBean;
 import org.example.footballplanning.bean.user.payDebt.PayDebtResponseBean;
-import org.example.footballplanning.bean.user.register.RegisterUserRequestBean;
-import org.example.footballplanning.bean.user.register.RegisterUserResponseBean;
 import org.example.footballplanning.bean.user.update.UpdateUserRequest;
 import org.example.footballplanning.bean.user.update.UpdateUserResponse;
 import org.example.footballplanning.service.UserService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 
 @RestController
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequestMapping("/user")
 public class UserController {
     UserService userService;
 
-    @PostMapping("/register")
-    public RegisterUserResponseBean registration(@RequestBody @Valid RegisterUserRequestBean request) {
-        return userService.register(request);
-    }
-
-    @GetMapping("/confirm-register")
-    public ConfirmRegisterResponseBean confirmRegister(@RequestParam String strToken) {
-        return userService.confirmRegistration(strToken);
-    }
-
     @PutMapping("/change-password")
-    public ChangePasswordResponseBean changePassword(@RequestBody @Valid ChangePasswordRequestBean request) {
-        return userService.changePassword(request);
+    public ResponseEntity<ChangePasswordResponseBean> changePassword(
+            @RequestBody @Valid ChangePasswordRequestBean request) {
+        return ResponseEntity.ok(userService.changePassword(request));
     }
 
     @PostMapping("/forgot-password")
-    public ForgotPasswordResponseBean forgotPassword(@RequestBody @Valid ForgotPasswordRequestBean request) {
-        return userService.forgotPassword(request);
+    public ResponseEntity<ForgotPasswordResponseBean> forgotPassword(
+            @RequestBody @Valid ForgotPasswordRequestBean request) {
+        return ResponseEntity.ok(userService.forgotPassword(request));
     }
 
     @GetMapping("/confirm-forgot-password")
-    public ConfirmForgotPasswordResponseBean confirmForgotPassword(@RequestParam(name = "strToken") String strToken,
-                                                                   @RequestParam(name = "newPassword") String newPassword) {
-        return userService.confirmForgotPassword(strToken, newPassword);
+    public ResponseEntity<ConfirmForgotPasswordResponseBean> confirmForgotPassword(
+            @RequestParam String strToken,
+            @RequestParam String newPassword) {
+        return ResponseEntity.ok(userService.confirmForgotPassword(strToken, newPassword));
     }
 
     @PutMapping("/update")
-    public UpdateUserResponse update(@RequestBody @Valid UpdateUserRequest request) {
-        return userService.update(request);
+    public ResponseEntity<UpdateUserResponse> update(
+            @RequestBody @Valid UpdateUserRequest request) {
+        return ResponseEntity.ok(userService.update(request));
     }
 
     @DeleteMapping("/delete-account")
-    public DeleteAccountResponseBean deleteAccount(@RequestBody @Valid DeleteAccountRequestBean request) {
-        return userService.deleteAccount(request);
+    public ResponseEntity<DeleteAccountResponseBean> deleteAccount(
+            @RequestBody @Valid DeleteAccountRequestBean request) {
+        return ResponseEntity.ok(userService.deleteAccount(request));
     }
 
     @GetMapping("/confirm-delete-account")
-    public ConfirmDeleteAccountResponseBean confirmDeleteAccount(@RequestParam(name = "strToken") String strToken) {
-        return userService.confirmDeleteAccount(strToken);
+    public ResponseEntity<ConfirmDeleteAccountResponseBean> confirmDeleteAccount(
+            @RequestParam String strToken) {
+        return ResponseEntity.ok(userService.confirmDeleteAccount(strToken));
     }
 
     @PostMapping("/pay-debt")
-    public PayDebtResponseBean payDebt(@RequestBody PayDebtRequestBean request) {
-        return userService.payDebt(request);
+    public ResponseEntity<PayDebtResponseBean> payDebt(
+            @RequestBody PayDebtRequestBean request) {
+        return ResponseEntity.ok(userService.payDebt(request));
     }
 }

@@ -10,6 +10,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 
@@ -19,7 +20,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public abstract class BaseEnt {
+public abstract class BaseEnt implements Serializable {
     @Id
     @GeneratedValue(generator = "uuid")
     @GenericGenerator(name = "uuid",strategy = "uuid2")
@@ -30,6 +31,4 @@ public abstract class BaseEnt {
     LocalDateTime createdDate;
     @UpdateTimestamp
     LocalDateTime updatedDate;
-
-
 }

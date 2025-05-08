@@ -4,5 +4,10 @@ app:
   server:
     host: localhost
     http: http://
+  announcement:
+    min-hours-before-start-and-end: 6
+  token:
+    expire-time: 15
+
 server:
   port: 8080

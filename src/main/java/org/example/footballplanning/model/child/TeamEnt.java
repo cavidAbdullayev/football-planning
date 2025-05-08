@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.example.footballplanning.model.parent.BaseEnt;
+import org.springframework.data.redis.core.RedisHash;
 
+import java.io.Serializable;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -15,7 +17,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Data
 @Table(name = "team")
-public class TeamEnt extends BaseEnt {
+public class TeamEnt extends BaseEnt implements Serializable {
     @Column(length = 30)
     String teamName;
 

@@ -5,7 +5,9 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.example.footballplanning.enums.TokenTypeEnum;
 import org.example.footballplanning.model.parent.BaseEnt;
+import org.springframework.data.redis.core.RedisHash;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @EqualsAndHashCode(callSuper = true)
@@ -16,10 +18,13 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "token")
-public class Token extends BaseEnt {
+public class Token extends BaseEnt implements Serializable {
     String strToken;
 
     LocalDateTime expireTime;
+
+    @Builder.Default
+    boolean isUsed=false;
 
     @Enumerated(EnumType.STRING)
     TokenTypeEnum usedFor;

@@ -11,7 +11,6 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RequestToAnnouncementRequestBean {
-    String fromUserId;
     String announcementId;
     String message;
     Integer playerCount;

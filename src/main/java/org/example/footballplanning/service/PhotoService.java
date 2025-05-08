@@ -7,6 +7,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface PhotoService {
     UploadPhotoResponseBean uploadPhoto(MultipartFile file);
+
     DeletePhotoResponseBean deletePhoto();
+
     ResponseEntity<byte[]> showProfilePhoto();
 }

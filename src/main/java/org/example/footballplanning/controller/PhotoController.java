@@ -18,13 +18,13 @@ public class PhotoController {
     PhotoService photoService;
 
     @PostMapping("/upload-photo")
-    UploadPhotoResponseBean uploadPhoto(@RequestPart("file") MultipartFile file) {
-        return photoService.uploadPhoto(file);
+    public ResponseEntity<UploadPhotoResponseBean> uploadPhoto(@RequestPart("file") MultipartFile file) {
+        return ResponseEntity.ok(photoService.uploadPhoto(file));
     }
 
     @DeleteMapping("/delete-photo")
-    DeletePhotoResponseBean deletePhoto() {
-        return photoService.deletePhoto();
+    public ResponseEntity<DeletePhotoResponseBean> deletePhoto() {
+        return ResponseEntity.ok(photoService.deletePhoto());
     }
 
     @GetMapping("/show-profile-photo")

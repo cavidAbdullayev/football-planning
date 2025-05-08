@@ -4,7 +4,6 @@ import org.example.footballplanning.bean.user.changePassword.ChangePasswordReque
 import org.example.footballplanning.bean.user.changePassword.ChangePasswordResponseBean;
 import org.example.footballplanning.bean.user.confirmDeleteAccount.ConfirmDeleteAccountResponseBean;
 import org.example.footballplanning.bean.user.confirmForgotPassword.ConfirmForgotPasswordResponseBean;
-import org.example.footballplanning.bean.user.confirmRegister.ConfirmRegisterResponseBean;
 import org.example.footballplanning.bean.user.deleteAccount.DeleteAccountRequestBean;
 import org.example.footballplanning.bean.user.deleteAccount.DeleteAccountResponseBean;
 import org.example.footballplanning.bean.user.forgotPassword.ForgotPasswordRequestBean;
@@ -13,15 +12,11 @@ import org.example.footballplanning.bean.user.loginWithPhoneNumber.LoginUserWith
 import org.example.footballplanning.bean.user.loginWithPhoneNumber.LoginUserWithPhoneNumberResponseBean;
 import org.example.footballplanning.bean.user.payDebt.PayDebtRequestBean;
 import org.example.footballplanning.bean.user.payDebt.PayDebtResponseBean;
-import org.example.footballplanning.bean.user.register.RegisterUserRequestBean;
-import org.example.footballplanning.bean.user.register.RegisterUserResponseBean;
 import org.example.footballplanning.bean.user.update.UpdateUserRequest;
 import org.example.footballplanning.bean.user.update.UpdateUserResponse;
 
 
 public interface UserService {
-    ConfirmRegisterResponseBean confirmRegistration(String strToken);
-    RegisterUserResponseBean register(RegisterUserRequestBean request);
     LoginUserWithPhoneNumberResponseBean loginWithPhoneNumber(LoginUserWithPhoneNumberRequestBean request);
     ChangePasswordResponseBean changePassword(ChangePasswordRequestBean request);
     ForgotPasswordResponseBean forgotPassword(ForgotPasswordRequestBean request);
@@ -30,6 +25,4 @@ public interface UserService {
     DeleteAccountResponseBean deleteAccount(DeleteAccountRequestBean request);
     ConfirmDeleteAccountResponseBean confirmDeleteAccount(String strToken);
     PayDebtResponseBean payDebt(PayDebtRequestBean request);
-
-
 }

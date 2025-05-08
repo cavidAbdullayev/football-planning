@@ -6,7 +6,9 @@ import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.example.footballplanning.model.parent.BaseEnt;
+import org.springframework.data.redis.core.RedisHash;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -16,7 +18,7 @@ import java.time.LocalDateTime;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "match_")
-public class MatchEnt extends BaseEnt {
+public class MatchEnt extends BaseEnt implements Serializable {
     @Max(120)
     @Min(30)
     Long durationInMinutes;

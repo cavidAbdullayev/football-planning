@@ -7,6 +7,9 @@ import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.example.footballplanning.model.parent.BaseEnt;
+import org.springframework.data.redis.core.RedisHash;
+
+import java.io.Serializable;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -16,7 +19,7 @@ import org.example.footballplanning.model.parent.BaseEnt;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "photo")
-public class PhotoEnt extends BaseEnt {
+public class PhotoEnt extends BaseEnt implements Serializable {
     String path;
     String format;
 

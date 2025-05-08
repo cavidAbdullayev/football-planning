@@ -8,64 +8,80 @@ import org.example.footballplanning.bean.announcement.request.RequestToAnnouncem
 import org.example.footballplanning.bean.announcement.request.RequestToAnnouncementResponseBean;
 import org.example.footballplanning.bean.base.BaseResponseBean;
 import org.example.footballplanning.bean.request.get.GetRequestResponseBean;
+import org.example.footballplanning.bean.request.rollbackRequest.RollbackRequestRequestBean;
+import org.example.footballplanning.bean.request.showReceivedRequests.ShowReceivedRequestsRequestBean;
+import org.example.footballplanning.bean.request.showSentRequests.ShowSentRequestsRequestBean;
 import org.example.footballplanning.bean.user.receiveRequest.ReceiveRequestRequestBean;
 import org.example.footballplanning.bean.user.receiveRequest.ReceiveRequestResponseBean;
-import org.example.footballplanning.helper.AnnouncementServiceHelper;
-import org.example.footballplanning.helper.MatchServiceHelper;
-import org.example.footballplanning.helper.RequestServiceHelper;
-import org.example.footballplanning.helper.UserServiceHelper;
+import org.example.footballplanning.exception.customExceptions.*;
+import org.example.footballplanning.helper.*;
 import org.example.footballplanning.model.child.*;
 import org.example.footballplanning.repository.*;
 import org.example.footballplanning.service.RequestService;
+import org.example.footballplanning.specifications.AnnouncementSpecifications;
+import org.example.footballplanning.specifications.RequestSpecifications;
+import org.example.footballplanning.util.GeneralUtil;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.example.footballplanning.helper.GeneralHelper.*;
+import static org.example.footballplanning.util.GeneralUtil.*;
 import static org.example.footballplanning.staticData.GeneralStaticData.currentUserId;
+import static org.example.footballplanning.util.ValidationUtil.checkPageSizeAndNumber;
+
 @Service
-@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
 public class RequestServiceImpl implements RequestService {
-    RequestRepository requestRepository;
-    MatchServiceHelper matchServiceHelper;
-    MatchRepository matchRepository;
-    AnnouncementRepository announcementRepository;
-    UserRepository userRepository;
-    MatchScheduleRepository matchScheduleRepository;
-    AnnouncementServiceHelper announcementServiceHelper;
-    RequestServiceHelper requestServiceHelper;
-    UserServiceHelper userServiceHelper;
+    final RequestRepository requestRepository;
+    final MatchServiceHelper matchServiceHelper;
+    final AnnouncementRepository announcementRepository;
+    final UserRepository userRepository;
+    final AnnouncementServiceHelper announcementServiceHelper;
+    final RequestServiceHelper requestServiceHelper;
+    final MatchScheduleServiceHelper matchScheduleServiceHelper;
+    final MatchRepository matchRepository;
+    final UserServiceHelper userServiceHelper;
+    final EmailServiceHelper emailServiceHelper;
+
+
+    @Value("${app.announcement.min-hours-before-start-and-end}")
+    long minHoursBeforeStartAndEnd;
 
     @SneakyThrows
     @Override
     @Transactional
     public RequestToAnnouncementResponseBean sendRequestToAnnouncement(RequestToAnnouncementRequestBean request) {
-        RequestToAnnouncementResponseBean response = new RequestToAnnouncementResponseBean();
-
         validateFields(request);
 
-        String announcementId = request.getAnnouncementId();
+        UserEnt from = userServiceHelper.getUserById(currentUserId);
 
-        UserEnt from = userRepository.findByIdAndState(request.getFromUserId(), 1).orElseThrow(() -> new RuntimeException("User not found!"));
+        Specification<AnnouncementEnt> specification = Specification.where(
+                        AnnouncementSpecifications.hasId(request.getAnnouncementId()))
+                .and(AnnouncementSpecifications.hasState(1));
 
-        AnnouncementEnt announcement = announcementRepository.findByIdAndState(request.getAnnouncementId(), 1).orElseThrow(() -> new RuntimeException("Announcement not found!"));
+        AnnouncementEnt announcement = announcementRepository.findOne(specification)
+                .orElseThrow(() -> new ObjectNotFoundException("Announcement not found!"));
 
         TeamEnt team = from.getTeam();
 
-        //check has team or not
+        //Check if user has a team
         if (team == null) {
-            throw new RuntimeException("You have not any team! Firstly create team!");
+            throw new TeamException("You do not have a team! Please create one first!");
         }
 
-        //check sent request is yourself or not
-        if (from.getSharedAnnouncements().stream().anyMatch(announcementEnt -> announcementEnt.getId().equals(announcementId))) {
-            throw new RuntimeException("You cannot sent request yourself!");
+        //Prevent sending a request to own announcement
+        if (announcementRepository.existsByIdAndContactUser_Id(request.getAnnouncementId(), announcement.getContactUser().getId())) {
+            throw new SendRequestException("You cannot send a request to your own announcement!");
         }
 
         UserEnt to = announcement.getContactUser();
@@ -75,39 +91,39 @@ public class RequestServiceImpl implements RequestService {
         LocalDateTime startDate = announcement.getStartDate();
         LocalDateTime endDate = announcement.getEndDate();
 
-        //check have you active announcement crash with this announcement
-        List<AnnouncementEnt> announcements = from.getSharedAnnouncements();
-        Optional<AnnouncementEnt> ownConflictAnnouncement = announcementServiceHelper.checkIsConflictWithAnnouncement(announcements, startDate, endDate);
+        // Check for conflicting announcements
+        Optional<AnnouncementEnt> ownConflictAnnouncement = announcementRepository.existsConflictWithUserAnnouncement(from.getId(), startDate.minusHours(minHoursBeforeStartAndEnd), endDate.plusHours(minHoursBeforeStartAndEnd));
+
         if (ownConflictAnnouncement.isPresent()) {
-            throw new RuntimeException("Your has announcement crash with this announcement! The announcement: \n"
+            throw new ConflictException("Your announcement conflicts with this one! Conflicting announcement:\n"
                     + announcementServiceHelper.mapFromAnnouncementResponseToJson(ownConflictAnnouncement.get()));
         }
 
-        //check have you ever sent request to this user for same announcement
-        boolean crashSentRequests = sentRequests.stream().anyMatch(requestEnt -> requestEnt.getAnnouncement().getId().equals(announcementId) && requestEnt.getState() == 1);
+        // Check if user has already sent a request to this announcement
+        boolean crashSentRequests = sentRequests.stream()
+                .anyMatch(req -> req.getAnnouncement()
+                        .getId().equals(request.getAnnouncementId()) && req.getState() == 1);
+
         if (crashSentRequests) {
-            throw new RuntimeException("You cannot sent request again this user for same announcement!");
+            throw new SendRequestException("You cannot send another request for the same announcement!");
         }
 
-        //check if one of your requested announcements conflict with this announcement
-        List<AnnouncementEnt> requestedAnnouncements = sentRequests.stream().map(RequestEnt::getAnnouncement).toList();
-        Optional<AnnouncementEnt> conflictAnnouncement = announcementServiceHelper.checkIsConflictWithAnnouncement(requestedAnnouncements, startDate, endDate);
+        // Check for conflicts with previously requested announcements
+        Optional<RequestEnt> conflictRequest = requestRepository.existsConflictWithSentRequests(from.getId(), startDate.minusHours(minHoursBeforeStartAndEnd), endDate.plusHours(minHoursBeforeStartAndEnd));
 
-        if (conflictAnnouncement.isPresent()) {
-            throw new RuntimeException("You have some requests than crash with other requests for start date and end date! Crashed announcement:\n"
-                    + announcementServiceHelper.mapFromAnnouncementResponseToJson(conflictAnnouncement.get()));
+        if (conflictRequest.isPresent()) {
+            throw new ConflictException("You have conflicting requests for the same time range! Conflicting announcement:\\n"
+                    + announcementServiceHelper.mapFromAnnouncementResponseToJson(conflictRequest.get().getAnnouncement()));
         }
 
-        //check user's sent request future matches, if exists another game in this interval, get error
-        //todo: check
-        List<MatchEnt> futureMatches = userServiceHelper.getFutureMatches(from);
-        Optional<MatchEnt> conflictMatch = matchServiceHelper.checkIsConflictWithMatch(futureMatches, startDate, endDate);
+        //Check for conflicts with future matches
+        Optional<MatchEnt> conflictMatch = matchRepository.getConflictingMatchByUser(from.getId(), startDate.minusHours(minHoursBeforeStartAndEnd), endDate.plusHours(minHoursBeforeStartAndEnd));
         if (conflictMatch.isPresent()) {
-            throw new RuntimeException("The requested announcement conflicts with your future matches! The match: \n" +
+            throw new ConflictException("This request conflicts with your future matches! Conflicting match:\n" +
                     matchServiceHelper.mapFromMatchResponseToJson(conflictMatch.get()));
         }
 
-        //create request entity
+        //Create and save request entity
         RequestEnt requestEnt = RequestEnt.builder()
                 .message(request.getMessage())
                 .from(from)
@@ -119,33 +135,36 @@ public class RequestServiceImpl implements RequestService {
 
         from.getSentRequests().add(requestEnt);
         to.getReceivedRequests().add(requestEnt);
-        requestRepository.save(requestEnt);
+        requestServiceHelper.save(requestEnt);
         userRepository.saveAll(Arrays.asList(from, to));
 
-        return createResponse(response, "Request sent successfully!");
+        return createResponse(new RequestToAnnouncementResponseBean(), "Request sent successfully!");
     }
 
     @Override
+    @Transactional
     public ReceiveRequestResponseBean receiveRequest(ReceiveRequestRequestBean request) {
-        ReceiveRequestResponseBean response = new ReceiveRequestResponseBean();
-
         validateFields(request);
+
+        UserEnt receiver = userServiceHelper.getUserById(currentUserId);
+
         String requestId = request.getRequestId();
 
-        UserEnt receiver = userRepository.findByIdAndState(currentUserId, 1).orElseThrow(() -> new RuntimeException("User not found!"));
+        Specification<RequestEnt> specification = Specification.where(
+                        RequestSpecifications.hasId(requestId))
+                .and(RequestSpecifications.hasState(1));
 
-        RequestEnt requestUser = receiver.getReceivedRequests().stream().filter(r -> r.getId().equals(requestId) && r.getState() == 1)
-                .findFirst().orElseThrow(() -> new RuntimeException("You have not received request given by id!"));
+        RequestEnt requestUser = requestServiceHelper.getById(specification);
 
         AnnouncementEnt announcementEnt = requestUser.getAnnouncement();
 
         if (announcementEnt.getState() == 0) {
-            throw new RuntimeException("Your announcement just not active!");
+            throw new SendRequestException("Your announcement just not active!");
         }
 
         UserEnt sender = requestUser.getFrom();
-
         StadiumEnt stadium = announcementEnt.getStadium();
+
         Long durationInMinutes = announcementEnt.getDurationInMinutes();
         Double hourlyRate = stadium.getHourlyRate();
         double playerCountReceiver = announcementEnt.getPlayerCount();
@@ -173,52 +192,110 @@ public class RequestServiceImpl implements RequestService {
         sender.setDebt(costPerPlayer * playerCountSender);
         requestUser.setState(0);
 
-        requestRepository.saveAll(announcementEnt.getRequests());
+        List<RequestEnt> updatedRequests = announcementEnt.getRequests().stream()
+                .peek(requestEnt -> requestEnt.setState(0))
+                .toList();
+
+        emailServiceHelper.sendMatchPoster(match);
+
+        requestServiceHelper.saveAll(updatedRequests);
         userRepository.saveAll(List.of(receiver, sender));
-        announcementRepository.save(announcementEnt);
-        matchRepository.save(match);
-        matchScheduleRepository.save(matchSchedule);
+        announcementServiceHelper.saveOrUpdate(announcementEnt);
+        matchServiceHelper.save(match);
+        matchScheduleServiceHelper.save(matchSchedule);
 
-        return createResponse(response, "Request received successfully!");
+        return createResponse(new ReceiveRequestResponseBean(), "Request received successfully!");
     }
 
     @Override
-    public List<GetRequestResponseBean> showSentRequests() {
-        UserEnt user = userRepository.findByIdAndState(currentUserId, 1).orElseThrow(() -> new RuntimeException("User not found!"));
-        List<RequestEnt> requests = user.getSentRequests();
-        List<GetRequestResponseBean> response = new ArrayList<>();
+    public List<GetRequestResponseBean> showSentRequests(ShowSentRequestsRequestBean request) {
+        userServiceHelper.getUserById(currentUserId);
 
-        requests.stream().filter(request -> request.getState() == 1).forEach(request ->
-                response.add(requestServiceHelper.getRequestResponse(request)));
+        request.normalize();
 
-        return response;
+        String date = request.getDate();
+        String toUserId = request.getToUserId();
+        Integer pageNumber = request.getPage();
+        Integer size = request.getSize();
+
+        checkPageSizeAndNumber(size, pageNumber);
+
+        Specification<RequestEnt> requestSpecification = Specification
+                .where(RequestSpecifications.hasUserId(currentUserId));
+
+        if (date != null && !date.isEmpty()) {
+            requestSpecification.and(RequestSpecifications.hasDate(strToDateTime(date)));
+        }
+
+        if (toUserId != null && !toUserId.isEmpty()) {
+            requestSpecification.and(RequestSpecifications.hasToUserId(toUserId));
+        }
+
+        requestSpecification.and(RequestSpecifications.hasState(1));
+
+        Pageable pageable = PageRequest.of(pageNumber, size);
+
+        Page<RequestEnt> page = requestRepository.findAll(requestSpecification, pageable);
+
+        return requestServiceHelper.getAllRequestsResponse(page.toList());
     }
 
     @Override
-    public List<GetRequestResponseBean> showReceivedRequests() {
-        UserEnt user = userRepository.findByIdAndState(currentUserId, 1).orElseThrow(() -> new RuntimeException("User not found!"));
-        List<RequestEnt> requests = user.getReceivedRequests();
-        List<GetRequestResponseBean> response = new ArrayList<>();
+    public List<GetRequestResponseBean> showReceivedRequests(ShowReceivedRequestsRequestBean request) {
+        userServiceHelper.getUserById(currentUserId);
 
-        requests.stream().filter(request -> request.getState() == 1).forEach(request ->
-                response.add(requestServiceHelper.getRequestResponse(request)));
+        request.normalize();
 
-        return response;
+        String date = request.getDate();
+        String fromUserId = request.getFromUserId();
+        Integer size = request.getSize();
+        Integer page = request.getPage();
+
+        checkPageSizeAndNumber(size, page);
+
+        Specification<RequestEnt> specification = Specification.where(
+                RequestSpecifications.hasUserId(currentUserId));
+
+        if (date != null && !date.isEmpty()) {
+            specification.and(RequestSpecifications.hasDate(strToDateTime(date)));
+        }
+
+        if (fromUserId != null && !fromUserId.isEmpty()) {
+            specification.and(RequestSpecifications.hasFromUserId(fromUserId));
+        }
+
+        specification.and(RequestSpecifications.hasState(1));
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<RequestEnt> requestPage = requestRepository.findAll(specification, pageable);
+
+        return requestServiceHelper.getAllRequestsResponse(requestPage.toList());
+
     }
 
     @Override
-    public BaseResponseBean rollbackRequest(String requestId) {
-        UserEnt user = userRepository.findByIdAndState(currentUserId, 1).orElseThrow(() ->
-                new RuntimeException("User given by id not found!"));
+    public BaseResponseBean rollbackRequest(RollbackRequestRequestBean requestBean) {
+        userServiceHelper.getUserById(currentUserId);
 
-        RequestEnt request = user.getSentRequests().stream().filter(requestEnt -> requestEnt.getId().equals(requestId) && requestEnt.getState() == 1).findFirst()
-                .orElseThrow(() -> new RuntimeException("You have not any sent request given by id!"));
+        if (GeneralUtil.isNullOrEmpty(requestBean.getRequestId())) {
+            throw new ValidationException("Request ID is required!");
+        }
+
+        Specification<RequestEnt> specification = Specification.where(
+                RequestSpecifications.hasUserId(currentUserId));
+
+        specification.and(RequestSpecifications.hasId(requestBean.getRequestId()));
+
+        specification.and(RequestSpecifications.hasState(1));
+
+        RequestEnt request = requestRepository.findOne(specification).orElseThrow(() ->
+                new ObjectNotFoundException("No active sent request found for given ID by id!"));
 
         request.setState(0);
 
-        requestRepository.save(request);
+        requestServiceHelper.save(request);
 
         return createResponse(new BaseResponseBean(), "Request rolled back successfully!");
-
     }
 }

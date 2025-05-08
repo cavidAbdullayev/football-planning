@@ -7,6 +7,9 @@ import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.example.footballplanning.model.parent.BaseEnt;
+import org.springframework.data.redis.core.RedisHash;
+
+import java.io.Serializable;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -16,7 +19,7 @@ import org.example.footballplanning.model.parent.BaseEnt;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "request")
-public class RequestEnt extends BaseEnt {
+public class RequestEnt extends BaseEnt implements Serializable {
     @Column(length = 80)
     String message;
     Integer playerCount;

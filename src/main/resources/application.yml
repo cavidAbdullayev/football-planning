@@ -5,3 +5,5 @@ spring:
       - email
       - values
       - file
+      - redis
+      - security

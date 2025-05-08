@@ -6,7 +6,9 @@ import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.example.footballplanning.model.parent.BaseEnt;
+import org.springframework.data.redis.core.RedisHash;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,7 +20,7 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "announcement")
-public class AnnouncementEnt extends BaseEnt {
+public class AnnouncementEnt extends BaseEnt implements Serializable {
     @Builder.Default
     boolean isActive=true;
     @Max(value = 22,message = "Player count must be less than 22!")

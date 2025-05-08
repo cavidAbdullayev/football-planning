@@ -1,5 +1,6 @@
 package org.example.footballplanning.controller;
 
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -12,6 +13,8 @@ import org.example.footballplanning.bean.stadium.get.GetStadiumResponseBean;
 import org.example.footballplanning.bean.stadium.update.UpdateStadiumRequestBean;
 import org.example.footballplanning.bean.stadium.update.UpdateStadiumResponseBean;
 import org.example.footballplanning.service.StadiumService;
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,32 +22,45 @@ import java.util.List;
 @RestController
 @RequestMapping("/stadium")
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class StadiumController {
     StadiumService stadiumService;
 
-    @GetMapping("/get-by-name")
-    public GetStadiumResponseBean getByName(@RequestBody GetByNameRequestBean request) {
-        return stadiumService.getByName(request);
-    }
-
     @GetMapping("/get-all")
-    public List<GetStadiumResponseBean> getAll() {
-        return stadiumService.getAll();
+    public ResponseEntity<List<GetStadiumResponseBean>> getAll() {
+        List<GetStadiumResponseBean> response = stadiumService.getAll();
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/create")
-    public CreateStadiumResponseBean create(@RequestBody CreateStadiumRequestBean request) {
-        return stadiumService.create(request);
+    public ResponseEntity<CreateStadiumResponseBean> create(
+            @RequestBody CreateStadiumRequestBean request) {
+        CreateStadiumResponseBean response = stadiumService.create(request);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/update")
-    public UpdateStadiumResponseBean update(@RequestBody UpdateStadiumRequestBean request) {
-        return stadiumService.update(request);
+    public ResponseEntity<UpdateStadiumResponseBean> update(
+            @RequestBody UpdateStadiumRequestBean request) {
+        UpdateStadiumResponseBean response = stadiumService.update(request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/delete")
-    public DeleteStadiumResponseBean delete(@RequestBody DeleteStadiumRequestBean request) {
-        return stadiumService.delete(request);
+    public ResponseEntity<DeleteStadiumResponseBean> delete(
+            @RequestBody DeleteStadiumRequestBean request) {
+        DeleteStadiumResponseBean response = stadiumService.delete(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/filtered")
+    public Page<GetStadiumResponseBean> getFilteredStadiums(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) Double minHourlyRate,
+            @RequestParam(required = false) Double maxHourlyRate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return stadiumService.getFilteredStadiums(name, location, minHourlyRate, maxHourlyRate, page, size);
     }
 }

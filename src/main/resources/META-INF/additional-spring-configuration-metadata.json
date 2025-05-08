@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "app.announcement.min-hours-before-start-and-end",
+      "type": "java.lang.Long",
+      "description": "Description for app.announcement.min-hours-before-start-and-end."
+    },
+    {
+      "name": "app.token.expire-time",
+      "type": "java.lang.Long",
+      "description": "Description for app.token.expire-time."
+    }
+  ]
+}

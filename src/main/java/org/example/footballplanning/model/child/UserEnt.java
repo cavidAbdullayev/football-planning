@@ -5,9 +5,12 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import org.example.footballplanning.model.parent.BaseEnt;
+import org.springframework.data.redis.core.RedisHash;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -17,7 +20,7 @@ import java.util.List;
 @Entity
 @SuperBuilder
 @Table(name = "user_")
-public class UserEnt extends BaseEnt {
+public class UserEnt extends BaseEnt implements Serializable {
     @Column(nullable = false)
     String firstName;
 
@@ -72,6 +75,8 @@ public class UserEnt extends BaseEnt {
     @OneToMany(mappedBy = "to", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     List<RequestEnt> receivedRequests;
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    Set<String>roles;
     @Override
     public String toString() {
         return "UserEnt{" +

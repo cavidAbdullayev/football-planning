@@ -9,66 +9,107 @@ import org.example.footballplanning.bean.team.delete.DeleteTeamRequestBean;
 import org.example.footballplanning.bean.team.delete.DeleteTeamResponseBean;
 import org.example.footballplanning.bean.team.update.UpdateTeamRequestBean;
 import org.example.footballplanning.bean.team.update.UpdateTeamResponseBean;
+import org.example.footballplanning.exception.customExceptions.ObjectAlreadyExistsException;
+import org.example.footballplanning.exception.customExceptions.TeamException;
+import org.example.footballplanning.helper.TeamServiceHelper;
+import org.example.footballplanning.helper.UserServiceHelper;
 import org.example.footballplanning.model.child.TeamEnt;
 import org.example.footballplanning.model.child.UserEnt;
+import org.example.footballplanning.repository.AnnouncementRepository;
+import org.example.footballplanning.repository.RequestRepository;
 import org.example.footballplanning.repository.TeamRepository;
-import org.example.footballplanning.repository.UserRepository;
 import org.example.footballplanning.service.TeamService;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import static org.example.footballplanning.helper.GeneralHelper.*;
+import static org.example.footballplanning.util.GeneralUtil.*;
+import static org.example.footballplanning.staticData.GeneralStaticData.currentUserId;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 @RequiredArgsConstructor
 public class TeamServiceImpl implements TeamService {
     TeamRepository teamRepository;
-    UserRepository userRepository;
+    UserServiceHelper userServiceHelper;
+    TeamServiceHelper teamServiceHelper;
+    AnnouncementRepository announcementRepository;
+    RequestRepository requestRepository;
 
     @Override
     public CreateTeamResponseBean create(CreateTeamRequestBean request) {
-        CreateTeamResponseBean response = new CreateTeamResponseBean();
-        String username = request.getUsername();
-        UserEnt user = userRepository.findByUsernameAndState(username, 1).orElseThrow(() -> new RuntimeException("User not found!"));
+        UserEnt user = userServiceHelper.getUserById(currentUserId);
+
         if (user.getTeam() != null) {
-            throw new RuntimeException("User already has team!");
+            throw new ObjectAlreadyExistsException("User already has a team!");
         }
+
+        validateFields(request);
+
         String teamName = request.getTeamName();
         if (teamRepository.existsByTeamName(teamName)) {
-            throw new RuntimeException("Team name already exists!");
+            throw new ObjectAlreadyExistsException("Team name already exists!");
         }
-        validateFields(request);
+
         TeamEnt team = new TeamEnt();
+
         mapFields(team, request);
+
         team.setManagerUser(user);
-        teamRepository.save(team);
+        teamServiceHelper.save(team);
+
+        CreateTeamResponseBean response = new CreateTeamResponseBean();
         response.setTeamName(teamName);
+
         return createResponse(response, "Team created successfully!");
     }
 
     @Override
     public UpdateTeamResponseBean update(UpdateTeamRequestBean request) {
-        UpdateTeamResponseBean response = new UpdateTeamResponseBean();
+        UserEnt user = userServiceHelper.getUserById(currentUserId);
+
         validateFields(request);
-        String teamName = request.getTeamOldName();
-        String teamNewName = request.getTeamName();
-        TeamEnt team = teamRepository.findByTeamName(teamName).orElseThrow(() -> new RuntimeException("Team not found!"));
-        if (teamRepository.existsByTeamName(teamNewName) && (!teamNewName.equalsIgnoreCase(teamName))) {
-            throw new RuntimeException("Team name already exists!");
+
+        String teamNewName = request.getTeamNewName();
+
+        TeamEnt team = user.getTeam();
+        if (team == null) {
+            throw new TeamException("You don't have a team!");
         }
+
+        if (teamRepository.existsByTeamName(teamNewName) && (!teamNewName.equals(team.getTeamName()))) {
+            throw new ObjectAlreadyExistsException("Team name already exists!");
+        }
+
         updateDifferentFields(team, request);
-        teamRepository.save(team);
-        response.setTeamName(teamNewName);
+        teamServiceHelper.save(team);
+
+        UpdateTeamResponseBean response = new UpdateTeamResponseBean();
+        response.setTeamName(request.getTeamNewName());
+
         return createResponse(response, "Team updated successfully!");
     }
 
     @Override
+    @Transactional
     public DeleteTeamResponseBean delete(DeleteTeamRequestBean request) {
-        DeleteTeamResponseBean response = new DeleteTeamResponseBean();
+        UserEnt user = userServiceHelper.getUserById(currentUserId);
+
         validateFields(request);
+
+        TeamEnt team = user.getTeam();
+        if (team == null) {
+            throw new TeamException("You don't have a team!");
+        }
+
+        announcementRepository.updateAnnouncementsStateByUser(user.getId(), 0);
+        requestRepository.updateRequestsStateBySenderOrReceiver(user.getId(), 0);
+
         String teamName = request.getTeamName();
-        TeamEnt team = teamRepository.findByTeamName(teamName).orElseThrow(() -> new RuntimeException("Team not found!"));
-        teamRepository.deleteById(team.getId());
+
+        teamServiceHelper.deleteById(team.getId());
+
+        DeleteTeamResponseBean response = new DeleteTeamResponseBean();
         response.setTeamName(teamName);
         return createResponse(response, "Team deleted successfully!");
     }

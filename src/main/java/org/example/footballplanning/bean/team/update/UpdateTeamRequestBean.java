@@ -11,6 +11,5 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UpdateTeamRequestBean {
-    String teamOldName;
-    String teamName;
+    String teamNewName;
 }

@@ -2,13 +2,11 @@ package org.example.footballplanning.service.impl;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.experimental.FieldDefaults;
 import org.example.footballplanning.bean.user.changePassword.ChangePasswordRequestBean;
 import org.example.footballplanning.bean.user.changePassword.ChangePasswordResponseBean;
 import org.example.footballplanning.bean.user.confirmDeleteAccount.ConfirmDeleteAccountResponseBean;
 import org.example.footballplanning.bean.user.confirmForgotPassword.ConfirmForgotPasswordResponseBean;
-import org.example.footballplanning.bean.user.confirmRegister.ConfirmRegisterResponseBean;
 import org.example.footballplanning.bean.user.deleteAccount.DeleteAccountRequestBean;
 import org.example.footballplanning.bean.user.deleteAccount.DeleteAccountResponseBean;
 import org.example.footballplanning.bean.user.forgotPassword.ForgotPasswordRequestBean;
@@ -17,13 +15,13 @@ import org.example.footballplanning.bean.user.loginWithPhoneNumber.LoginUserWith
 import org.example.footballplanning.bean.user.loginWithPhoneNumber.LoginUserWithPhoneNumberResponseBean;
 import org.example.footballplanning.bean.user.payDebt.PayDebtRequestBean;
 import org.example.footballplanning.bean.user.payDebt.PayDebtResponseBean;
-import org.example.footballplanning.bean.user.register.RegisterUserRequestBean;
-import org.example.footballplanning.bean.user.register.RegisterUserResponseBean;
 import org.example.footballplanning.bean.user.update.UpdateUserRequest;
 import org.example.footballplanning.bean.user.update.UpdateUserResponse;
 import org.example.footballplanning.enums.PaymentMethodEnum;
+import org.example.footballplanning.exception.customExceptions.*;
 import org.example.footballplanning.helper.EmailServiceHelper;
 import org.example.footballplanning.helper.TokenServiceHelper;
+import org.example.footballplanning.helper.UserServiceHelper;
 import org.example.footballplanning.model.child.*;
 import org.example.footballplanning.repository.*;
 import org.example.footballplanning.service.UserService;
@@ -31,16 +29,13 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static java.util.Objects.*;
 import static org.example.footballplanning.enums.TokenTypeEnum.*;
-import static org.example.footballplanning.helper.GeneralHelper.*;
-import static org.example.footballplanning.helper.GeneralHelper.containsNullOrEmptyValue;
-import static org.example.footballplanning.staticData.GeneralStaticData.*;
+import static org.example.footballplanning.util.GeneralUtil.*;
+import static org.example.footballplanning.util.GeneralUtil.containsNullOrEmptyValue;
+import static org.example.footballplanning.staticData.GeneralStaticData.currentUserId;
 
 
 @Service
@@ -55,104 +50,34 @@ public class UserServiceImpl implements UserService {
     AnnouncementRepository announcementRepository;
     TeamRepository teamRepository;
     RequestRepository requestRepository;
-
-    @SneakyThrows
-    @Override
-    @Transactional
-    public RegisterUserResponseBean register(@NotNull RegisterUserRequestBean request) {
-        RegisterUserResponseBean response = new RegisterUserResponseBean();
-        validateFields(request);
-
-        String username = request.getUsername();
-        String email = request.getEmail();
-        String phoneNumber = request.getPhoneNumber();
-        Integer year = request.getYear();
-        Integer month = request.getMonth();
-        Integer day = request.getDay();
-        LocalDate birthDate = LocalDate.of(year, month, day);
-
-        validateFields(request);
-        if (userRepository.existsByEmailAndState(email, 1)) {
-            throw new RuntimeException("Email already exists!");
-        }
-        if (userRepository.existsByUsernameAndState(username, 1)) {
-            throw new RuntimeException("Username already exists!");
-        }
-        if (userRepository.existsByPhoneNumberAndState(phoneNumber, 1)) {
-            throw new RuntimeException("Phone number already exists!");
-        }
-
-        Optional<UserEnt> userOpt = userRepository.findByEmailAndPhoneNumberAndUsernameAndState(username, email, phoneNumber, 0);
-        UserEnt user = userOpt.orElseGet(() -> mapFields(new UserEnt(), request));
-
-
-        if (userOpt.isPresent()) {
-            updateDifferentFields(user, request);
-        }
-
-        user.setDateOfBirth(birthDate);
-        user.setState(0);
-
-        Token token = tokenServiceHelper.getOrGenerateToken(user, REGISTRATION);
-
-        userRepository.save(user);
-        tokenRepository.save(token);
-        Map<String, Object> data = Map.of("token", token);
-        String message = emailServiceHelper.sendEmailWithToken(data, email);
-        response.setMessage(message);
-        return response;
-    }
+    UserServiceHelper userServiceHelper;
 
     @Override
     public LoginUserWithPhoneNumberResponseBean loginWithPhoneNumber(@NotNull LoginUserWithPhoneNumberRequestBean request) {
         return null;
     }
 
-
-    @SneakyThrows
-    @Override
-    @Transactional
-    public ConfirmRegisterResponseBean confirmRegistration(@NotNull String strToken) {
-        ConfirmRegisterResponseBean response = new ConfirmRegisterResponseBean();
-
-        Token token = tokenServiceHelper.checkAndGetToken(strToken);
-        UserEnt user = token.getUser();
-        List<AnnouncementEnt> announcements = user.getSharedAnnouncements();
-
-        //return last announcements if don't expire
-        announcements.stream().filter(announcement ->
-                LocalDateTime.now().plusHours(6).isBefore(announcement.getStartDate())).forEach(announcement -> announcement.setState(1));
-
-        user.setState(1);
-        userRepository.save(user);
-
-        mapFields(response, user);
-        response.setDateOfBirth(user.getDateOfBirth().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
-
-        return createResponse(response, "User registered successfully!");
-    }
-
     @Override
     @Transactional
     public ChangePasswordResponseBean changePassword(@NotNull ChangePasswordRequestBean request) {
-        String username = request.getUsername();
         String newPassword = request.getNewPassword();
         String oldPassword = request.getOldPassword();
         String repeatNewPassword = request.getRepeatNewPassword();
 
-        if (containsNullOrEmptyValue(username, newPassword, oldPassword, repeatNewPassword)) {
-            throw new RuntimeException("Invalid request body!");
+        if (containsNullOrEmptyValue(newPassword, oldPassword, repeatNewPassword)) {
+            throw new ValidationException("Invalid request body!");
         }
         if (!newPassword.equals(repeatNewPassword)) {
-            throw new RuntimeException("New password and its repeat doesn't match!");
+            throw new PasswordException("New password and its repeat doesn't match!");
         }
-        UserEnt user = userRepository.findByUsernameAndState(username, 1).orElse(null);
-        if (isNull(user)) {
-            throw new RuntimeException("User given by username not found!");
+
+
+        UserEnt user = userServiceHelper.getUserById(currentUserId);
+
+        if (!(oldPassword.equals(user.getPassword()))) {
+            throw new PasswordException("Password is incorrect!");
         }
-        if (!oldPassword.equals(user.getPassword())) {
-            throw new RuntimeException("Password is incorrect!");
-        }
+
         user.setPassword(newPassword);
         userRepository.save(user);
 
@@ -162,33 +87,37 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public ForgotPasswordResponseBean forgotPassword(@NotNull ForgotPasswordRequestBean request) {
+        validateFields(request);
+
+        String email = request.getEmail();
         String newPassword = request.getNewPassword();
-        String username = request.getUsername();
         String repeatPassword = request.getRepeatPassword();
-        if (containsNullOrEmptyValue(newPassword, username, repeatPassword)) {
-            throw new RuntimeException("Invalid request body!");
-        }
-        if (!repeatPassword.equals(newPassword)) {
-            throw new RuntimeException("New password and its repeat doesn't match!");
-        }
-        UserEnt user = userRepository.findByUsernameAndState(username, 1).orElse(null);
-        if (isNull(user)) {
-            throw new RuntimeException("User given by username not found!");
+
+        if (containsNullOrEmptyValue(email, newPassword, repeatPassword)) {
+            throw new ValidationException("Invalid request body!");
         }
 
-        String email = user.getEmail();
+        if (!newPassword.equals(repeatPassword)) {
+            throw new PasswordException("New password and its repeat doesn't match!");
+        }
 
-        Token token = user.getTokens()
-                .stream()
-                .filter(t -> t.getUsedFor().equals(FORGOT_PASSWORD))
+        UserEnt user = userRepository.findByEmailAndState(email, 1).orElseThrow(() ->
+                new ObjectNotFoundException("User with the given email not found!"));
+
+        Token token = user.getTokens().stream()
+                .filter(t -> t.getUsedFor().equals(FORGOT_PASSWORD) && !t.isUsed())
                 .findFirst()
                 .orElseGet(() -> tokenServiceHelper.generateToken(user, FORGOT_PASSWORD));
 
-        token.setExpireTime(LocalDateTime.now().plusMinutes(5));
+        token.setExpireTime(LocalDateTime.now().plusMinutes(15));
         token.setStrToken(UUID.randomUUID().toString());
+
         tokenRepository.save(token);
-        Map<String, Object> data = Map.of("newPassword", newPassword, "token", token);
+
+        Map<String, Object> data = Map.of("newPassword", newPassword, "token", token.getStrToken());
+
         String message = emailServiceHelper.sendEmailWithToken(data, email);
+
         return createResponse(new ForgotPasswordResponseBean(), message);
     }
 
@@ -197,10 +126,17 @@ public class UserServiceImpl implements UserService {
     public ConfirmForgotPasswordResponseBean confirmForgotPassword(@NotNull String strToken, String newPassword) {
         Token token = tokenServiceHelper.checkAndGetToken(strToken);
 
+        if (token.isUsed() || token.getExpireTime().isBefore(LocalDateTime.now())) {
+            throw new SessionExpiredException("Token is expired or already used!");
+        }
+
         UserEnt user = token.getUser();
 
         user.setPassword(newPassword);
         userRepository.save(user);
+
+        token.setUsed(true);
+        tokenRepository.save(token);
 
         return createResponse(new ConfirmForgotPasswordResponseBean(), "Password reset!");
     }
@@ -210,27 +146,22 @@ public class UserServiceImpl implements UserService {
     public UpdateUserResponse update(@NotNull UpdateUserRequest request) {
         UpdateUserResponse response = new UpdateUserResponse();
 
-        String username = request.getUsername();
-        String dateOfBirth = request.getDateOfBirth();
+        UserEnt user = userServiceHelper.getUserById(currentUserId);
 
-        if (isNullOrEmpty(username)) {
-            throw new RuntimeException("Invalid request body!");
+        if (request.getDateOfBirth() != null) {
+            user.setDateOfBirth(strToDate(request.getDateOfBirth()));
         }
 
-        Optional<UserEnt> userOpt = userRepository.findByUsernameAndState(username, 1);
-        UserEnt user = userOpt.orElseThrow(() -> new RuntimeException("User not found!"));
-
-        if (dateOfBirth != null) {
-            user.setDateOfBirth(strToDate(dateOfBirth));
-        }
-        if (userRepository.existsByPhoneNumberAndState(request.getPhoneNumber(), 1) && !user.getPhoneNumber().equals(request.getPhoneNumber())) {
-            throw new RuntimeException("Phone number already exists!");
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().equals(user.getPhoneNumber())) {
+            if (userRepository.existsByPhoneNumberAndState(request.getPhoneNumber(), 1)) {
+                throw new ObjectAlreadyExistsException("Phone number already exists!");
+            }
         }
 
         mapFields(user, request);
         mapFields(response, user);
 
-        response.setDateOfBirth(dateToStr(strToDate(dateOfBirth)));
+        response.setDateOfBirth(dateToStr(strToDate(request.getDateOfBirth())));
         response.setMessage("User updated successfully!");
 
         return response;
@@ -243,26 +174,25 @@ public class UserServiceImpl implements UserService {
 
         validateFields(request);
 
-        String username = request.getUsername();
+        UserEnt user = userServiceHelper.getUserById(currentUserId);
 
-        UserEnt user = userRepository.findByUsernameAndState(username, 1).orElseThrow(() -> new RuntimeException("User not exists by username!"));
-        Double debt = user.getDebt();
-
-        if (debt != null && debt > 0) {
-            throw new RuntimeException("You have debt! Firstly pay your debt before deleting your account!");
+        if (user.getDebt() != null && user.getDebt() > 0) {
+            throw new DebtException("You have debt! Firstly pay your debt before deleting your account!");
         }
 
-        Token token = user.getTokens().stream().filter(t -> t.getUsedFor().equals(DELETE_ACCOUNT)).findFirst()
+        Token tokenEnt = user.getTokens().stream()
+                .filter(t -> t.getUsedFor().equals(DELETE_ACCOUNT))
+                .findFirst()
                 .orElseGet(() -> tokenServiceHelper.generateToken(user, DELETE_ACCOUNT));
 
-        token.setExpireTime(LocalDateTime.now().plusMinutes(5));
-        token.setStrToken(UUID.randomUUID().toString());
+        tokenEnt.setExpireTime(LocalDateTime.now().plusMinutes(15));
+        tokenEnt.setStrToken(UUID.randomUUID().toString());
 
-        Map<String, Object> data = Map.of("token", token, "username", username);
+        tokenRepository.save(tokenEnt);
+
+        Map<String, Object> data = Map.of("token", tokenEnt.getStrToken(), "username", user.getUsername());
 
         String message = emailServiceHelper.sendEmailWithToken(data, user.getEmail());
-
-        tokenRepository.save(token);
 
         response.setMessage(message);
         return response;
@@ -273,30 +203,18 @@ public class UserServiceImpl implements UserService {
         ConfirmDeleteAccountResponseBean response = new ConfirmDeleteAccountResponseBean();
 
         Token token = tokenServiceHelper.checkAndGetToken(strToken);
-
         UserEnt user = token.getUser();
+
+        tokenRepository.delete(token);
+
         user.setState(0);
 
-        TeamEnt team = user.getTeam();
-        team.setState(0);
-
-        List<AnnouncementEnt> announcements = user.getSharedAnnouncements();
-        announcements.forEach(announcement -> announcement.setState(0));
-
-        List<RequestEnt> sentRequests = user.getSentRequests();
-        sentRequests.stream().filter(sentRequest -> sentRequest.getState().equals(1))
-                .forEach(sentRequest -> sentRequest.setState(0));
-
-        List<RequestEnt> receivedRequests = user.getReceivedRequests();
-        receivedRequests.stream().filter(receivedRequest -> receivedRequest.getState() == 1)
-                .forEach(receivedRequest -> receivedRequest.setState(0));
+        userRepository.updateUserState(user.getId(), 0);
+        teamRepository.delete(user.getTeam());
+        announcementRepository.updateAnnouncementsStateByUser(user.getId(), 0);
+        requestRepository.updateRequestsStateBySenderOrReceiver(user.getId(), 0);
 
         user.setHasEverDeleted(true);
-
-        teamRepository.save(team);
-        announcementRepository.saveAll(announcements);
-        requestRepository.saveAll(sentRequests);
-        requestRepository.saveAll(receivedRequests);
         userRepository.save(user);
 
         response.setMessage("Your account deleted successfully!");
@@ -308,37 +226,39 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public PayDebtResponseBean payDebt(PayDebtRequestBean request) {
-        PayDebtResponseBean response = new PayDebtResponseBean();
         validateFields(request);
 
-        UserEnt user = userRepository.findByIdAndState(currentUserId, 1).orElseThrow(() -> new RuntimeException("User not found!"));
+        UserEnt user = userServiceHelper.getUserById(currentUserId);
 
         Double debt = user.getDebt();
 
         if (debt == null || debt == 0) {
-            throw new RuntimeException("You have not any debt!");
+            throw new DebtException("You have not any debt!");
         }
 
         Double amount = request.getAmount();
-        String paymentMethod = request.getPaymentMethod();
 
         if (amount <= 0) {
-            throw new RuntimeException("Invalid amount!");
-        } else {
-            debt = debt <= amount ? 0 : debt - amount;
-            response.setMessage("Your debt paid successfully! Remaining debt: " + debt + "$");
+            throw new ValidationException("Invalid amount!");
         }
 
-        PaymentMethodEnum paymentMethodEnum = Arrays.stream(PaymentMethodEnum.values()).filter(method -> method.name().equalsIgnoreCase(paymentMethod)).findFirst()
-                .orElseThrow(() -> new RuntimeException("Invalid payment method!"));
+        double remainingDebt = Math.max(0, debt - amount);
+        user.setDebt(remainingDebt);
+
+        PaymentMethodEnum paymentMethodEnum = Arrays.stream(PaymentMethodEnum.values())
+                .filter(method -> method.name().equalsIgnoreCase(request.getPaymentMethod()))
+                .findFirst()
+                .orElseThrow(() -> new ValidationException("Invalid payment method!"));
+
         PaymentEnt payment = mapFields(new PaymentEnt(), request);
         payment.setPaymentMethod(paymentMethodEnum);
         payment.setUser(user);
         paymentRepository.save(payment);
 
-        user.setDebt(debt);
         userRepository.save(user);
 
+        PayDebtResponseBean response = new PayDebtResponseBean();
+        response.setMessage("Your debt has been successfully paid! Remaining debt: " + remainingDebt + "AZN");
         return response;
     }
 }

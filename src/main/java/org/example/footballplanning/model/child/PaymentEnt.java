@@ -6,7 +6,9 @@ import lombok.experimental.FieldDefaults;
 import org.example.footballplanning.enums.PaymentMethodEnum;
 import org.example.footballplanning.model.parent.BaseEnt;
 import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.redis.core.RedisHash;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @EqualsAndHashCode(callSuper = true)
@@ -17,7 +19,7 @@ import java.time.LocalDateTime;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "payment")
-public class PaymentEnt extends BaseEnt {
+public class PaymentEnt extends BaseEnt implements Serializable {
     Double amount;
 
     @CreationTimestamp

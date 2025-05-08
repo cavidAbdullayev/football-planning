@@ -6,56 +6,88 @@ import lombok.experimental.FieldDefaults;
 import org.example.footballplanning.bean.feedback.createFeedback.CreateFeedbackRequestBean;
 import org.example.footballplanning.bean.feedback.createFeedback.CreateFeedbackResponseBean;
 import org.example.footballplanning.bean.feedback.getFeedbacks.FeedbackResponseBean;
-import org.example.footballplanning.bean.feedback.getFeedbacks.GetFeedbacksByUsernameRequestBean;
-import org.example.footballplanning.bean.feedback.getFeedbacks.GetFeedbacksByUsernameResponseBean;
+import org.example.footballplanning.bean.feedback.getFeedbacks.GetFeedbacksUsernameRequestBean;
+import org.example.footballplanning.bean.feedback.getFeedbacks.GetFeedbacksUsernameResponseBean;
+import org.example.footballplanning.helper.FeedbackServiceHelper;
+import org.example.footballplanning.helper.UserServiceHelper;
 import org.example.footballplanning.model.child.FeedbackEnt;
 import org.example.footballplanning.model.child.UserEnt;
-import org.example.footballplanning.repository.FeedBackRepository;
-import org.example.footballplanning.repository.UserRepository;
+import org.example.footballplanning.repository.FeedbackRepository;
 import org.example.footballplanning.service.FeedbackService;
+import org.example.footballplanning.specifications.FeedbackSpecifications;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import static org.example.footballplanning.helper.GeneralHelper.*;
+import static org.example.footballplanning.staticData.GeneralStaticData.currentUserId;
+import static org.example.footballplanning.util.GeneralUtil.*;
+import static org.example.footballplanning.util.ValidationUtil.checkPageSizeAndNumber;
+
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 @RequiredArgsConstructor
 public class FeedbackServiceImpl implements FeedbackService {
-    UserRepository userRepository;
-    FeedBackRepository feedBackRepository;
+    FeedbackServiceHelper feedbackServiceHelper;
+    UserServiceHelper userServiceHelper;
+    FeedbackRepository feedbackRepository;
 
     @Override
     public CreateFeedbackResponseBean createFeedback(CreateFeedbackRequestBean request) {
-        CreateFeedbackResponseBean response = new CreateFeedbackResponseBean();
         validateFields(request);
-        String username = request.getUsername();
-        UserEnt user = userRepository.findByUsernameAndState(username, 1).orElseThrow(() -> new RuntimeException("User doesn't exists!"));
+
+        UserEnt user = userServiceHelper.getUserById(currentUserId);
+
         FeedbackEnt feedback = mapFields(new FeedbackEnt(), request);
         feedback.setUser(user);
-        feedBackRepository.save(feedback);
+
+        feedbackServiceHelper.save(feedback);
+
+        CreateFeedbackResponseBean response = new CreateFeedbackResponseBean();
+
         response.setTimeStamp(dateTimeToStr(feedback.getCreatedDate()));
+
         mapFields(response, request);
+
         return createResponse(response, "Feedback sent successfully!");
     }
 
     @Override
-    public GetFeedbacksByUsernameResponseBean getByFeedbacksUsername(GetFeedbacksByUsernameRequestBean request) {
-        GetFeedbacksByUsernameResponseBean response = new GetFeedbacksByUsernameResponseBean();
-        List<FeedbackResponseBean> feedbackResponses = new ArrayList<>();
-        validateFields(request);
-        String username = request.getUsername();
-        UserEnt user = userRepository.findByUsernameAndState(username, 1).orElseThrow(() -> new RuntimeException("User don't exists!"));
-        List<FeedbackEnt> feedbacks = user.getSentFeedbacks();
-        for (FeedbackEnt feedback : feedbacks) {
-            FeedbackResponseBean feedbackResponse = new FeedbackResponseBean();
-            mapFields(feedbackResponse, feedback);
-            feedbackResponse.setTimeStamp(dateTimeToStr(feedback.getCreatedDate()));
-            feedbackResponses.add(feedbackResponse);
+    public GetFeedbacksUsernameResponseBean getByFeedbacksUsername(GetFeedbacksUsernameRequestBean request) {
+
+        userServiceHelper.getUserById(currentUserId);
+
+        request.normalize();
+
+        Integer page = request.getPage();
+        Integer size = request.getSize();
+
+        checkPageSizeAndNumber(size, page);
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Specification<FeedbackEnt> specification = Specification
+                .where(FeedbackSpecifications.hasUserId(currentUserId));
+
+        if (request.getDate() != null && !request.getDate().isEmpty()) {
+            specification.and(FeedbackSpecifications.afterDate(strToDateTime(request.getDate())));
         }
-        response.setFeedbacks(feedbackResponses);
-        mapFields(response, request);
-        return response;
+
+        Page<FeedbackEnt> feedbacks = feedbackRepository.findAll(specification, pageable);
+
+        List<FeedbackResponseBean> feedbackResponses = feedbacks.stream()
+                .map(feedback -> {
+                    FeedbackResponseBean feedbackResponse = new FeedbackResponseBean();
+                    mapFields(feedbackResponse, feedback);
+                    return feedbackResponse;
+                }).toList();
+
+        return GetFeedbacksUsernameResponseBean.builder()
+                .message("Your feedbacks:")
+                .feedbacks(feedbackResponses)
+                .build();
     }
 }

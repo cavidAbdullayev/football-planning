@@ -1,9 +1,12 @@
-package org.example.footballplanning.bean.match.get;
+package org.example.footballplanning.bean.announcement.showMyAnnouncements;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
+import org.example.footballplanning.bean.announcement.get.GetAnnouncementResponse;
 import org.example.footballplanning.bean.base.BaseResponseBean;
+
+import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -11,9 +14,6 @@ import org.example.footballplanning.bean.base.BaseResponseBean;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @SuperBuilder
-public class GetMatchResponse extends BaseResponseBean {
-    Long durationInMinutes;
-    Double costPerPlayer;
-    String matchDate;
-    String announcementId;
+public class ShowMyAnnouncementsResponseBean extends BaseResponseBean {
+    List<GetAnnouncementResponse>announcements;
 }

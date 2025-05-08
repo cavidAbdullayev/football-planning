@@ -8,38 +8,55 @@ import org.example.footballplanning.bean.stadium.create.CreateStadiumRequestBean
 import org.example.footballplanning.bean.stadium.create.CreateStadiumResponseBean;
 import org.example.footballplanning.bean.stadium.delete.DeleteStadiumRequestBean;
 import org.example.footballplanning.bean.stadium.delete.DeleteStadiumResponseBean;
-import org.example.footballplanning.bean.stadium.get.GetByNameRequestBean;
 import org.example.footballplanning.bean.stadium.get.GetStadiumResponseBean;
 import org.example.footballplanning.bean.stadium.update.UpdateStadiumRequestBean;
 import org.example.footballplanning.bean.stadium.update.UpdateStadiumResponseBean;
+import org.example.footballplanning.exception.customExceptions.ObjectAlreadyExistsException;
+import org.example.footballplanning.exception.customExceptions.ValidationException;
+import org.example.footballplanning.helper.StadiumServiceHelper;
+import org.example.footballplanning.helper.UserServiceHelper;
 import org.example.footballplanning.model.child.StadiumEnt;
 import org.example.footballplanning.repository.StadiumRepository;
 import org.example.footballplanning.service.StadiumService;
+import org.example.footballplanning.specifications.StadiumSpecifications;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static org.example.footballplanning.helper.GeneralHelper.*;
+import static org.example.footballplanning.util.GeneralUtil.*;
+import static org.example.footballplanning.staticData.GeneralStaticData.currentUserId;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class StadiumServiceImpl implements StadiumService {
     StadiumRepository stadiumRepository;
+    StadiumServiceHelper stadiumServiceHelper;
+    UserServiceHelper userServiceHelper;
 
     @SneakyThrows
     @Override
     public CreateStadiumResponseBean create(CreateStadiumRequestBean request) {
-        CreateStadiumResponseBean response = new CreateStadiumResponseBean();
         validateFields(request);
+
         String name = request.getName();
+
         if (stadiumRepository.existsByName(name)) {
-            throw new RuntimeException("Stadium name already exists!");
+            throw new ObjectAlreadyExistsException("Stadium name already exists!");
         }
+
         StadiumEnt stadium = mapFields(new StadiumEnt(), request);
-        stadiumRepository.save(stadium);
+        stadiumServiceHelper.save(stadium);
+
+        CreateStadiumResponseBean response = new CreateStadiumResponseBean();
+
         response.setMessage("Stadium created successfully!");
+
         return mapFields(response, stadium);
     }
 
@@ -47,49 +64,80 @@ public class StadiumServiceImpl implements StadiumService {
     @Transactional
     public UpdateStadiumResponseBean update(UpdateStadiumRequestBean request) {
         UpdateStadiumResponseBean response = new UpdateStadiumResponseBean();
+
         String name = request.getName();
         if (isNullOrEmpty(name)) {
-            throw new RuntimeException("Invalid request body!");
+            throw new ValidationException("Invalid request body!");
         }
+
         if (stadiumRepository.existsByName(name)) {
-            throw new RuntimeException("Stadium name already exists!");
+            throw new ObjectAlreadyExistsException("Stadium name already exists!");
         }
-        StadiumEnt stadium = stadiumRepository.findByName(name).orElseThrow(() -> new RuntimeException("Stadium not found!"));
+
+        StadiumEnt stadium = stadiumServiceHelper.getByName(name);
+
         updateDifferentFields(stadium, request);
-        stadiumRepository.save(stadium);
+
+        stadiumServiceHelper.save(stadium);
+
         response.setMessage("Stadium created successfully!");
+
         return mapFields(response, stadium);
     }
 
     @Override
     @Transactional
     public DeleteStadiumResponseBean delete(DeleteStadiumRequestBean request) {
-        DeleteStadiumResponseBean response = new DeleteStadiumResponseBean();
         String name = request.getName();
         if (isNullOrEmpty(name)) {
-            throw new RuntimeException("Invalid request body!");
+            throw new ValidationException("Invalid request body!");
         }
-        StadiumEnt stadium = stadiumRepository.findByName(name).orElseThrow(() -> new RuntimeException("Stadium not found!"));
-        stadiumRepository.deleteByName(name);
+
+        StadiumEnt stadium = stadiumServiceHelper.getByName(name);
+        stadiumServiceHelper.deleteByName(name);
+
+        DeleteStadiumResponseBean response = new DeleteStadiumResponseBean();
+
         response.setMessage("Stadium deleted successfully!");
+
         return mapFields(response, stadium);
     }
 
     @Override
-    public GetStadiumResponseBean getByName(GetByNameRequestBean request) {
-        GetStadiumResponseBean response = new GetStadiumResponseBean();
-        String name = request.getName();
-        if (isNullOrEmpty(name)) {
-            throw new RuntimeException("Invalid request body!");
+    public Page<GetStadiumResponseBean> getFilteredStadiums(String name, String location, Double minHourlyRate, Double maxHourlyRate, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Specification<StadiumEnt> spec = Specification.where(null);
+
+        if (name != null && !name.isEmpty()) {
+            spec = spec.and(StadiumSpecifications.hasName(name));
         }
-        StadiumEnt stadium = stadiumRepository.findByName(name).orElseThrow(() -> new RuntimeException("Stadium not found!"));
-        mapFields(response, stadium);
-        return response;
+
+        if (location != null && !location.isEmpty()) {
+            spec = spec.and(StadiumSpecifications.hasLocation(location));
+        }
+
+        if (minHourlyRate != null && maxHourlyRate != null) {
+            spec = spec.and(StadiumSpecifications.hasHourlyRateBetween(minHourlyRate, maxHourlyRate));
+        }
+
+        Page<StadiumEnt> stadiumPage = stadiumRepository.findAll(spec, pageable);
+
+        return stadiumPage.map(stadium -> {
+            GetStadiumResponseBean response = new GetStadiumResponseBean();
+            mapFields(response, stadium);
+            return response;
+        });
+
     }
 
     @Override
     public List<GetStadiumResponseBean> getAll() {
-        List<StadiumEnt> stadiums = stadiumRepository.findAll();
-        return stadiums.stream().map(s -> mapFields(new GetStadiumResponseBean(), s)).toList();
+        userServiceHelper.getUserById(currentUserId);
+
+        return stadiumServiceHelper.getAll()
+                .stream()
+                .map(s -> mapFields(new GetStadiumResponseBean(), s))
+                .toList();
     }
 }

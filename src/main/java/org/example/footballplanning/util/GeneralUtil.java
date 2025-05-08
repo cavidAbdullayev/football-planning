@@ -1,8 +1,9 @@
-package org.example.footballplanning.helper;
+package org.example.footballplanning.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.example.footballplanning.bean.base.BaseResponseBean;
+import org.example.footballplanning.exception.customExceptions.ValidationException;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
@@ -10,10 +11,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
-public class GeneralHelper {
+public class GeneralUtil {
     public static boolean isNullOrEmpty(String txt) {
         return txt == null || txt.trim().isEmpty();
     }
@@ -32,72 +34,71 @@ public class GeneralHelper {
         return response;
     }
 
+
     @SneakyThrows
     public static <T, F> T mapFields(T to, F from) {
-        Class<?> entityClass = to.getClass();
-        Class<?> requestClass = from.getClass();
+        Set<String> entityFieldNames = Arrays.stream(to.getClass().getDeclaredFields())
+                .map(Field::getName)
+                .collect(Collectors.toSet());
 
-        Field[] requestFields = requestClass.getDeclaredFields();
-        Field[] entityFields = entityClass.getDeclaredFields();
-        Set<String> entityFieldNames = new HashSet<>();
-        for (Field entityField : entityFields) {
-            entityFieldNames.add(entityField.getName());
-        }
-        for (Field requestField : requestFields) {
+        for (Field requestField : from.getClass().getDeclaredFields()) {
             requestField.setAccessible(true);
             Object value = requestField.get(from);
-            if (value == null || (value instanceof String && isNullOrEmpty(value.toString()))) {
+
+            if (value == null || (value instanceof String && ((String) value).isEmpty())) {
                 continue;
             }
+
             if (entityFieldNames.contains(requestField.getName())) {
-                Field entityField = entityClass.getDeclaredField(requestField.getName());
+                Field entityField = to.getClass().getDeclaredField(requestField.getName());
                 entityField.setAccessible(true);
 
                 if (entityField.getType().isAssignableFrom(requestField.getType())) {
                     entityField.set(to, value);
                 }
             }
+
         }
         return to;
     }
 
     @SneakyThrows
     public static void validateFields(Object request) {
-
-        Field[] fields = request.getClass().getDeclaredFields();
-
-        for (Field field : fields) {
+        for (Field field : request.getClass().getDeclaredFields()) {
             field.setAccessible(true);
             Object value = field.get(request);
-            if (value == null || (value instanceof String && ((String) value).isEmpty())) {
-                throw new RuntimeException(field.getName() + " cannot be null or empty!");
+
+            if (value == null || (value instanceof String str && str.isEmpty())) {
+                throw new ValidationException(field.getName() + " cannot be null or empty!");
             }
         }
     }
 
     @SneakyThrows
-    public static <T, R> T updateDifferentFields(T entity, R request) {
+    public static <T, R> void updateDifferentFields(T entity, R request) {
         Class<?> entityClass = entity.getClass();
         Class<?> requestClass = request.getClass();
 
-        Field[] requestFields = requestClass.getDeclaredFields();
+        Map<String, Field> entityFieldsMap = Arrays.stream(entityClass.getDeclaredFields())
+                .collect(Collectors.toMap(Field::getName, field -> field));
 
-        for (Field requestField : requestFields) {
-            Field entityField = Arrays.stream(entityClass.getDeclaredFields()).filter(ef -> ef.getName().equals(requestField.getName()))
-                    .findFirst().orElse(null);
+        for (Field requestField : requestClass.getDeclaredFields()) {
+            Field entityField = entityFieldsMap.get(requestField.getName());
+
             if (entityField != null) {
-
                 requestField.setAccessible(true);
                 entityField.setAccessible(true);
 
                 Object requestValue = requestField.get(request);
                 Object entityValue = entityField.get(entity);
-                if ((requestValue != null && !requestValue.toString().equalsIgnoreCase("") && !requestValue.equals(entityValue))) {
+
+                if (requestValue != null && !(requestValue instanceof String str && str.isBlank()) && !requestValue.equals(entityValue)) {
                     entityField.set(entity, requestValue);
                 }
+
             }
         }
-        return entity;
+
     }
 
     public static LocalDate strToDate(String strDate) {

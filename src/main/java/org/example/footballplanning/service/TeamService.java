@@ -9,6 +9,8 @@ import org.example.footballplanning.bean.team.update.UpdateTeamResponseBean;
 
 public interface TeamService {
     CreateTeamResponseBean create(CreateTeamRequestBean request);
+
     UpdateTeamResponseBean update(UpdateTeamRequestBean request);
+
     DeleteTeamResponseBean delete(DeleteTeamRequestBean request);
 }

@@ -9,7 +9,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
 public class ChangePasswordRequestBean {
-    String username;
     String oldPassword;
     String newPassword;
     String repeatNewPassword;
