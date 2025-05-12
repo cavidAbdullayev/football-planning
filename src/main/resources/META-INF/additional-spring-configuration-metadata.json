@@ -1,5 +1,5 @@
-{
-  "properties": [
+{  "properties": [
+
     {
       "name": "app.announcement.min-hours-before-start-and-end",
       "type": "java.lang.Long",

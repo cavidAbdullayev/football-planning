@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -118,9 +119,9 @@ public class AnnouncementServiceHelper {
     }
 
 
-    @Cacheable(value = "announcementCache",key = "#announcementId")
-    public AnnouncementEnt findByIdAndStateAndContactUser(String announcementId, Integer state, UserEnt user) {
-        return announcementRepository.findByIdAndStateAndContactUser(announcementId, state, user)
+    @Cacheable(value = "announcementCache",key = "#result.id")
+    public AnnouncementEnt getByGivenSpecification(Specification<AnnouncementEnt> specification) {
+        return announcementRepository.findOne(specification)
                 .orElseThrow(() -> new ObjectNotFoundException("No active announcement found with the given ID!"));
     }
 }

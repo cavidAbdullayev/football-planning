@@ -116,8 +116,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                 .and(AnnouncementSpecifications.hasContactUserId(currentUserId))
                 .and(AnnouncementSpecifications.hasState(1));
 
-        AnnouncementEnt announcement = announcementRepository.findOne(specification)
-                .orElseThrow(() -> new ObjectNotFoundException("No active announcement found with the given ID!"));
+        AnnouncementEnt announcement = announcementServiceHelper.getByGivenSpecification(specification);
 
         announcement.setState(0);
 
@@ -140,8 +139,13 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             throw new ValidationException("Announcement ID cannot be empty!");
         }
 
+        Specification<AnnouncementEnt>specification=Specification.where(
+                AnnouncementSpecifications.hasId(announcementId)
+                        .and(AnnouncementSpecifications.hasContactUserId(currentUserId))
+                        .and(AnnouncementSpecifications.hasState(1)));
+
         // Fetch the active announcement owned by the user
-        AnnouncementEnt announcement = announcementRepository.findByIdAndStateAndContactUser(announcementId, 1, user)
+        AnnouncementEnt announcement = announcementRepository.findOne(specification)
                 .orElseThrow(() -> new ObjectNotFoundException("No active announcement found with the given ID!"));
 
         // Update Duration

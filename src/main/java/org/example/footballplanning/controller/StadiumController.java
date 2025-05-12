@@ -10,6 +10,7 @@ import org.example.footballplanning.bean.stadium.delete.DeleteStadiumRequestBean
 import org.example.footballplanning.bean.stadium.delete.DeleteStadiumResponseBean;
 import org.example.footballplanning.bean.stadium.get.GetByNameRequestBean;
 import org.example.footballplanning.bean.stadium.get.GetStadiumResponseBean;
+import org.example.footballplanning.bean.stadium.getFilteredStadium.GetFilteredStadiumRequestBean;
 import org.example.footballplanning.bean.stadium.update.UpdateStadiumRequestBean;
 import org.example.footballplanning.bean.stadium.update.UpdateStadiumResponseBean;
 import org.example.footballplanning.service.StadiumService;
@@ -54,13 +55,7 @@ public class StadiumController {
     }
 
     @GetMapping("/filtered")
-    public Page<GetStadiumResponseBean> getFilteredStadiums(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String location,
-            @RequestParam(required = false) Double minHourlyRate,
-            @RequestParam(required = false) Double maxHourlyRate,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return stadiumService.getFilteredStadiums(name, location, minHourlyRate, maxHourlyRate, page, size);
+    public Page<GetStadiumResponseBean> getFilteredStadiums(GetFilteredStadiumRequestBean request) {
+        return stadiumService.getFilteredStadiums(request);
     }
 }

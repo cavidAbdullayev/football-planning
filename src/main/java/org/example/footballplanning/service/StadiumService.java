@@ -6,6 +6,7 @@ import org.example.footballplanning.bean.stadium.delete.DeleteStadiumRequestBean
 import org.example.footballplanning.bean.stadium.delete.DeleteStadiumResponseBean;
 import org.example.footballplanning.bean.stadium.get.GetByNameRequestBean;
 import org.example.footballplanning.bean.stadium.get.GetStadiumResponseBean;
+import org.example.footballplanning.bean.stadium.getFilteredStadium.GetFilteredStadiumRequestBean;
 import org.example.footballplanning.bean.stadium.update.UpdateStadiumRequestBean;
 import org.example.footballplanning.bean.stadium.update.UpdateStadiumResponseBean;
 import org.springframework.data.domain.Page;
@@ -19,7 +20,7 @@ public interface StadiumService {
 
     DeleteStadiumResponseBean delete(DeleteStadiumRequestBean request);
 
-    Page<GetStadiumResponseBean> getFilteredStadiums(String name, String location, Double minHourlyRate, Double maxHourlyRate, int page, int size);
+    Page<GetStadiumResponseBean> getFilteredStadiums(GetFilteredStadiumRequestBean request);
 
     List<GetStadiumResponseBean> getAll();
 }

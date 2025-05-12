@@ -9,6 +9,7 @@ import org.example.footballplanning.bean.stadium.create.CreateStadiumResponseBea
 import org.example.footballplanning.bean.stadium.delete.DeleteStadiumRequestBean;
 import org.example.footballplanning.bean.stadium.delete.DeleteStadiumResponseBean;
 import org.example.footballplanning.bean.stadium.get.GetStadiumResponseBean;
+import org.example.footballplanning.bean.stadium.getFilteredStadium.GetFilteredStadiumRequestBean;
 import org.example.footballplanning.bean.stadium.update.UpdateStadiumRequestBean;
 import org.example.footballplanning.bean.stadium.update.UpdateStadiumResponseBean;
 import org.example.footballplanning.exception.customExceptions.ObjectAlreadyExistsException;
@@ -104,7 +105,17 @@ public class StadiumServiceImpl implements StadiumService {
     }
 
     @Override
-    public Page<GetStadiumResponseBean> getFilteredStadiums(String name, String location, Double minHourlyRate, Double maxHourlyRate, int page, int size) {
+    public Page<GetStadiumResponseBean> getFilteredStadiums(GetFilteredStadiumRequestBean request) {
+
+        request.normalize();
+
+        int page=request.getPage();
+        int size=request.getSize();
+        String name=request.getName();
+        String location=request.getLocation();
+        Double maxHourlyRate= request.getMaxHourlyRate();
+        Double minHourlyRate= request.getMinHourlyRate();
+
         Pageable pageable = PageRequest.of(page, size);
 
         Specification<StadiumEnt> spec = Specification.where(null);
