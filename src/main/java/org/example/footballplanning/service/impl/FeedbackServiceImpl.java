@@ -76,7 +76,8 @@ public class FeedbackServiceImpl implements FeedbackService {
             specification.and(FeedbackSpecifications.afterDate(strToDateTime(request.getDate())));
         }
 
-        Page<FeedbackEnt> feedbacks = feedbackRepository.findAll(specification, pageable);
+        List<FeedbackEnt> feedbacks = feedbackRepository.findAll(specification, pageable)
+                .toList();
 
         List<FeedbackResponseBean> feedbackResponses = feedbacks.stream()
                 .map(feedback -> {

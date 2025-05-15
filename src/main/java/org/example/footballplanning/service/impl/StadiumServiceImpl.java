@@ -105,7 +105,7 @@ public class StadiumServiceImpl implements StadiumService {
     }
 
     @Override
-    public Page<GetStadiumResponseBean> getFilteredStadiums(GetFilteredStadiumRequestBean request) {
+    public List<GetStadiumResponseBean> getFilteredStadiums(GetFilteredStadiumRequestBean request) {
 
         request.normalize();
 
@@ -132,13 +132,15 @@ public class StadiumServiceImpl implements StadiumService {
             spec = spec.and(StadiumSpecifications.hasHourlyRateBetween(minHourlyRate, maxHourlyRate));
         }
 
-        Page<StadiumEnt> stadiumPage = stadiumRepository.findAll(spec, pageable);
+        List<StadiumEnt> stadiums = stadiumRepository.findAll(spec, pageable)
+                .toList();
 
-        return stadiumPage.map(stadium -> {
+        return stadiums.stream()
+                .map(stadium -> {
             GetStadiumResponseBean response = new GetStadiumResponseBean();
             mapFields(response, stadium);
             return response;
-        });
+        }).toList();
 
     }
 

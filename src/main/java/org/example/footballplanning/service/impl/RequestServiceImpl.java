@@ -235,9 +235,10 @@ public class RequestServiceImpl implements RequestService {
 
         Pageable pageable = PageRequest.of(pageNumber, size);
 
-        Page<RequestEnt> page = requestRepository.findAll(requestSpecification, pageable);
+        List<RequestEnt> requests = requestRepository.findAll(requestSpecification, pageable)
+                .toList();
 
-        return requestServiceHelper.getAllRequestsResponse(page.toList());
+        return requestServiceHelper.getAllRequestsResponse(requests);
     }
 
     @Override
@@ -268,9 +269,10 @@ public class RequestServiceImpl implements RequestService {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<RequestEnt> requestPage = requestRepository.findAll(specification, pageable);
+        List<RequestEnt> requests = requestRepository.findAll(specification, pageable)
+                .toList();
 
-        return requestServiceHelper.getAllRequestsResponse(requestPage.toList());
+        return requestServiceHelper.getAllRequestsResponse(requests);
 
     }
 

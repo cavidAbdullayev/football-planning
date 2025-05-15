@@ -20,14 +20,17 @@ import org.example.footballplanning.exception.customExceptions.ConflictException
 import org.example.footballplanning.exception.customExceptions.GameValidationException;
 import org.example.footballplanning.exception.customExceptions.ObjectNotFoundException;
 import org.example.footballplanning.exception.customExceptions.ValidationException;
-import org.example.footballplanning.helper.*;
+import org.example.footballplanning.helper.AnnouncementServiceHelper;
+import org.example.footballplanning.helper.MatchServiceHelper;
+import org.example.footballplanning.helper.RequestServiceHelper;
+import org.example.footballplanning.helper.UserServiceHelper;
 import org.example.footballplanning.model.child.*;
-import org.example.footballplanning.repository.*;
+import org.example.footballplanning.repository.AnnouncementRepository;
+import org.example.footballplanning.repository.MatchRepository;
+import org.example.footballplanning.repository.StadiumRepository;
 import org.example.footballplanning.service.AnnouncementService;
 import org.example.footballplanning.specifications.AnnouncementSpecifications;
-import org.example.footballplanning.util.ValidationUtil;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -37,8 +40,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.example.footballplanning.staticData.GeneralStaticData.currentUserId;
 import static org.example.footballplanning.util.GeneralUtil.*;
-import static org.example.footballplanning.staticData.GeneralStaticData.*;
 import static org.example.footballplanning.util.ValidationUtil.checkPageSizeAndNumber;
 
 @Service
@@ -324,7 +327,8 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             specification.and(AnnouncementSpecifications.startDateAfter(strToDateTime(startDate)));
         }
 
-        Page<AnnouncementEnt> announcements = announcementRepository.findAll(specification, pageable);
+        List<AnnouncementEnt> announcements = announcementRepository.findAll(specification, pageable)
+                .toList();
 
         return announcements.stream()
                 .map(announcement -> {

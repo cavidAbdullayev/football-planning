@@ -13,6 +13,7 @@ import java.util.Optional;
 @Repository
 public interface MatchRepository extends JpaRepository<MatchEnt,String> {
     List<MatchEnt>findAllByMatchDateIsBeforeAndState(LocalDateTime dateTime, Integer state);
+    //TODO: update this to specifications
     @Query("select match " +
             "from MatchEnt match " +
             "where match.announcement.contactUser.id = :userId " +

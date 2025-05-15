@@ -19,6 +19,6 @@ public class ShowReceivedRequestsRequestBean {
 
     public void normalize() {
         if (this.page == null) this.page = 0;
-        if (this.size == null) this.size = 5;
+        if (this.size == null || this.page == 0) this.size = 5;
     }
 }

@@ -41,13 +41,13 @@ public class RequestController implements Serializable {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/show-sent-requests")
+    @PostMapping("/show-sent-requests")
     public ResponseEntity<List<GetRequestResponseBean>> showSentRequests(@RequestBody ShowSentRequestsRequestBean request) {
         List<GetRequestResponseBean> response = requestService.showSentRequests(request);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/show-received-requests")
+    @PostMapping("/show-received-requests")
     public ResponseEntity<List<GetRequestResponseBean>> showReceivedRequests(@RequestBody ShowReceivedRequestsRequestBean request) {
         List<GetRequestResponseBean> response = requestService.showReceivedRequests(request);
         return ResponseEntity.ok(response);

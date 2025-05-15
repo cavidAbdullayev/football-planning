@@ -54,8 +54,8 @@ public class StadiumController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/filtered")
-    public Page<GetStadiumResponseBean> getFilteredStadiums(GetFilteredStadiumRequestBean request) {
+    @PostMapping("/filtered")
+    public List<GetStadiumResponseBean> getFilteredStadiums(GetFilteredStadiumRequestBean request) {
         return stadiumService.getFilteredStadiums(request);
     }
 }

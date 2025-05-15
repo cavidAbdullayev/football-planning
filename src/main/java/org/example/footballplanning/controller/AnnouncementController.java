@@ -1,5 +1,6 @@
 package org.example.footballplanning.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -43,11 +44,11 @@ public class AnnouncementController {
     }
 
     @PutMapping("/activate-old-announcement")
-    public ActivateOldAnnouncementResponseBean activateOldAnnouncement(ActivateOldAnnouncementRequestBean request) {
+    public ActivateOldAnnouncementResponseBean activateOldAnnouncement(@RequestBody ActivateOldAnnouncementRequestBean request) {
         return announcementService.activateOldAnnouncement(request);
     }
 
-    @GetMapping("/show-my-announcements")
+    @PostMapping("/show-my-announcements")
     public List<GetAnnouncementResponse> showMyAnnouncements(@RequestBody ShowMyAnnouncementsRequestBean request) {
         return announcementService.showMyAnnouncements(request);
     }

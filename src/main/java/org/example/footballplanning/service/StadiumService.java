@@ -20,7 +20,7 @@ public interface StadiumService {
 
     DeleteStadiumResponseBean delete(DeleteStadiumRequestBean request);
 
-    Page<GetStadiumResponseBean> getFilteredStadiums(GetFilteredStadiumRequestBean request);
+    List<GetStadiumResponseBean> getFilteredStadiums(GetFilteredStadiumRequestBean request);
 
     List<GetStadiumResponseBean> getAll();
 }

@@ -3,6 +3,7 @@ package org.example.footballplanning.repository;
 import org.example.footballplanning.model.child.UserEnt;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<UserEnt, String>, Specification<UserEnt> {
+public interface UserRepository extends JpaRepository<UserEnt, String>, JpaSpecificationExecutor<UserEnt> {
     boolean existsByPhoneNumberAndState(String phoneNumber, Integer state);
 
     Optional<UserEnt> findByEmailAndState(String email, Integer state);

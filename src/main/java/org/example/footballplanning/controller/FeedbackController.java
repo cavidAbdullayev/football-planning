@@ -24,7 +24,7 @@ public class FeedbackController {
         return ResponseEntity.ok(feedbackService.createFeedback(request));
     }
 
-    @GetMapping("/get-all-feedbacks-by-username")
+    @PostMapping("/get-all-feedbacks-by-username")
     public ResponseEntity<GetFeedbacksUsernameResponseBean> getByFeedbacksUsername(@RequestBody @Valid GetFeedbacksUsernameRequestBean request) {
         return ResponseEntity.ok(feedbackService.getByFeedbacksUsername(request));
     }
