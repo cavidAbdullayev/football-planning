@@ -21,12 +21,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 import static org.example.footballplanning.util.GeneralUtil.*;
 import static org.example.footballplanning.staticData.GeneralStaticData.currentUserId;
@@ -47,10 +46,9 @@ public class PhotoServiceImpl implements PhotoService {
 
         UserEnt user = userServiceHelper.getUserById(currentUserId);
 
-        byte[] bytes = file.getInputStream().readAllBytes();
         String originalFileName = file.getOriginalFilename();
 
-        if (originalFileName.isBlank() || !originalFileName.contains(".")) {
+        if (originalFileName == null || originalFileName.isBlank() || !originalFileName.contains(".")) {
             throw new ValidationException("Invalid file name!");
         }
 
@@ -62,25 +60,40 @@ public class PhotoServiceImpl implements PhotoService {
 
         String photoPath = mediaPath + user.getUsername() + "_" + System.currentTimeMillis() + "." + extension;
 
-        if (user.getPhoto() != null) {
-            File oldPhoto = new File(user.getPhoto().getPath());
-            if (oldPhoto.exists() && !oldPhoto.delete()) {
-                throw new FileStorageException("Failed to delete old photo: " + oldPhoto.getPath());
+        //Delete old photo
+        Optional.ofNullable(user.getPhoto())
+                .map(PhotoEnt::getPath)
+                .map(File::new)
+                .filter(File::exists)
+                .ifPresent(fileToDelete -> {
+                    if (!fileToDelete.delete()) {
+                        throw new FileStorageException("Failed to delete old photo: " + fileToDelete.getPath());
+                    }
+                });
+
+        //Save new photo
+        try (InputStream inputStream = file.getInputStream();
+             OutputStream outputStream = new FileOutputStream(photoPath)) {
+
+            byte[] temp = new byte[8192]; //8 KB
+            int bytesRead;
+            while ((bytesRead = inputStream.read(temp)) != -1) {
+                outputStream.write(temp, 0, bytesRead);
             }
+        } catch (IOException e) {
+            throw new FileStorageException("Error saving photo to disk");
         }
 
-        PhotoEnt photo = user.getPhoto() != null ? user.getPhoto() : new PhotoEnt();
+        PhotoEnt photo = Optional.ofNullable(user.getPhoto())
+                .orElseGet(PhotoEnt::new);
 
         photo.setUser(user);
         photo.setPath(photoPath);
         photo.setFormat(extension);
 
-        try (FileOutputStream outputStream = new FileOutputStream(photoPath)) {
-            outputStream.write(bytes);
-        }
-
         user.setPhoto(photo);
         userRepository.save(user);
+
 
         return createResponse(response, "Photo uploaded successfully!");
     }
@@ -114,6 +127,7 @@ public class PhotoServiceImpl implements PhotoService {
     @SneakyThrows
     @Override
     public ResponseEntity<byte[]> showProfilePhoto() {
+
         UserEnt user = userServiceHelper.getUserById(currentUserId);
         PhotoEnt photo = user.getPhoto();
 
@@ -122,11 +136,29 @@ public class PhotoServiceImpl implements PhotoService {
         }
 
         Path photoPath = Paths.get(photo.getPath());
-        byte[] byteFile = Files.readAllBytes(photoPath);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(photoServiceHelper.getMediaType(photo.getFormat()));
+        try {
+            byte[] byteFile;
 
-        return new ResponseEntity<>(byteFile, headers, HttpStatus.OK);
+            try (InputStream inputStream = Files.newInputStream(photoPath);
+                 ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+
+                byte[] temp = new byte[8192]; //8 KB
+                int bytesRead;
+                while ((bytesRead = inputStream.read(temp)) != -1) {
+                    buffer.write(temp, 0, bytesRead);
+                }
+
+                byteFile = buffer.toByteArray();
+            }
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(photoServiceHelper.getMediaType(photo.getFormat()));
+
+            return new ResponseEntity<>(byteFile, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            throw new PhotoOperationException("Profile photo could not be read!");
+        }
+
     }
 }

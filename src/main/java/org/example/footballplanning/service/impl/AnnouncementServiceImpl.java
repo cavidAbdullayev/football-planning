@@ -336,6 +336,5 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                     mapFields(announcementResponse, announcement);
                     return announcementResponse;
                 }).toList();
-
     }
 }
